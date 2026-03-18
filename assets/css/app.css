@@ -957,3 +957,13 @@ input:focus,select:focus,textarea:focus{border-color:#c9b3ff;box-shadow:0 0 0 4p
 @media (max-width:980px){
   .cloud-sync-row .btn{flex:1 1 140px}
 }
+
+
+.sidebar-brand-logo-wrap{display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px}
+.sidebar-brand-logo{width:54px;height:54px;border-radius:16px;display:block;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+.topbar-brand-mark-logo{padding:0;overflow:hidden;background:transparent;border:none;box-shadow:none}
+.topbar-brand-logo{width:100%;height:100%;object-fit:cover;border-radius:14px;display:block}
+.topbar-brand-title-logo{font-weight:800;letter-spacing:-.02em}
+@media (max-width:768px){
+  .sidebar-brand-logo{width:48px;height:48px;border-radius:14px}
+}

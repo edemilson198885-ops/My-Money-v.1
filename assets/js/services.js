@@ -45,36 +45,47 @@ MM.services = {
     return 'aberto';
   },
   getMonthMovements: function(){ return MM.state.movements.filter(function(m){ return m.competence === MM.state.currentMonth; }); },
+  getMovementCashDate: function(m){
+    if(!m) return '';
+    if(m.type === 'saida') return m.settledDate || '';
+    if(m.settledDate) return m.settledDate;
+    if(m.dueDate && m.dueDate <= new Date().toISOString().slice(0,10)) return m.dueDate;
+    return '';
+  },
+  getMovementCashMonth: function(m){
+    var d = this.getMovementCashDate(m);
+    return d ? d.slice(0,7) : '';
+  },
+  isMovementRealizedInMonth: function(m, month){
+    return this.getMovementCashMonth(m) === month;
+  },
   getDashboardMetrics: function(){
     var month = MM.state.currentMonth;
-    var prevMonth = MM.helpers.previousMonth(month);
-    var entries = this.getMonthMovements();
-    var entradas = entries.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
-    var saidas = entries.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
-    var overdue = entries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'atrasado'; }).length;
-    var dueSoon = entries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length;
+    var competenceEntries = this.getMonthMovements();
+    var today = new Date().toISOString().slice(0,10);
 
-    var prevMov = MM.state.movements.filter(function(m){ return m.competence === prevMonth; });
-    var prevEntradas = prevMov.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
-    var prevSaidas = prevMov.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
-    var saldoAnterior = prevEntradas - prevSaidas;
-
-    var months = Array.from(new Set(MM.state.movements.map(function(m){ return m.competence; }))).sort();
-    var saldoAcumulado = 0;
-    months.forEach(function(mon){
-      if(mon <= month){
-        var ms = MM.state.movements.filter(function(m){ return m.competence === mon; });
-        var e = ms.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
-        var s = ms.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
-        saldoAcumulado += (e - s);
-      }
+    var realizedEntries = MM.state.movements.filter(function(m){
+      return MM.services.isMovementRealizedInMonth(m, month);
     });
+
+    var entradas = realizedEntries.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
+    var saidas = realizedEntries.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
+    var overdue = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'atrasado'; }).length;
+    var dueSoon = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length;
+
+    var saldoAnterior = MM.state.movements.reduce(function(sum, m){
+      var cashDate = MM.services.getMovementCashDate(m);
+      if(!cashDate || cashDate.slice(0,7) >= month) return sum;
+      return sum + (m.type === 'entrada' ? Number(m.amount||0) : -Number(m.amount||0));
+    }, 0);
+
+    var saldoAcumulado = saldoAnterior + (entradas - saidas);
 
     var byUserIncome = MM.state.users.map(function(u){
-      return { user:u, total: entries.filter(function(m){ return m.type === 'entrada' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
+      return { user:u, total: realizedEntries.filter(function(m){ return m.type === 'entrada' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
     });
     var byUserExpense = MM.state.users.map(function(u){
-      return { user:u, total: entries.filter(function(m){ return m.type === 'saida' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
+      return { user:u, total: realizedEntries.filter(function(m){ return m.type === 'saida' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
     });
     var byUserBalance = MM.state.users.map(function(u){
       var income = byUserIncome.find(function(item){ return item.user.id === u.id; });
@@ -84,10 +95,11 @@ MM.services = {
       return { user:u, total: incomeTotal - expenseTotal, income: incomeTotal, expense: expenseTotal };
     });
     var byCategory = {};
-    entries.forEach(function(m){ var key = String(m.category || '').trim() || 'Sem categoria'; byCategory[key] = (byCategory[key] || 0) + Number(m.amount || 0); });
+    realizedEntries.filter(function(m){ return m.type === 'saida'; }).forEach(function(m){ var key = String(m.category || '').trim() || 'Sem categoria'; byCategory[key] = (byCategory[key] || 0) + Number(m.amount || 0); });
 
-    var monthlyFlow = months.slice(-6).map(function(mon){
-      var ms = MM.state.movements.filter(function(item){ return item.competence === mon; });
+    var cashMonths = Array.from(new Set(MM.state.movements.map(function(m){ return MM.services.getMovementCashMonth(m); }).filter(Boolean))).sort();
+    var monthlyFlow = cashMonths.slice(-6).map(function(mon){
+      var ms = MM.state.movements.filter(function(item){ return MM.services.isMovementRealizedInMonth(item, mon); });
       var totalEntradas = ms.filter(function(item){ return item.type === 'entrada'; }).reduce(function(sum,item){ return sum + Number(item.amount || 0); }, 0);
       var totalSaidas = ms.filter(function(item){ return item.type === 'saida'; }).reduce(function(sum,item){ return sum + Number(item.amount || 0); }, 0);
       return {
@@ -105,7 +117,7 @@ MM.services = {
       saldoAnterior: saldoAnterior,
       saldo: saldoAnterior + (entradas - saidas),
       saldoAcumulado: saldoAcumulado,
-      count: entries.length,
+      count: competenceEntries.length,
       byUserIncome: byUserIncome,
       byUserExpense: byUserExpense,
       byUserBalance: byUserBalance,

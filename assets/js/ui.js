@@ -63,9 +63,10 @@ MM.ui = {
     if(sidebar) sidebar.style.display = '';
     this.setHTML('sidebar', `
       <div class="sidebar-brand">
-        <div class="brand-kicker">My Money <span class="brand-kicker-version">v${MM.config.APP_VERSION}</span></div>
+        <div class="sidebar-brand-logo-wrap"><img src="./assets/logo-home-rs.png" alt="Residência Financeira" class="sidebar-brand-logo" /></div>
+        <div class="brand-kicker">Residência Financeira <span class="brand-kicker-version">v${MM.config.APP_VERSION}</span></div>
         <div class="brand-name">Seu controle</div>
-        <div class="brand-version">Financeiro simples e forte</div>
+        <div class="brand-version">Saldo, contas e família no mesmo lugar</div>
       </div>
       <nav class="sidebar-nav">
         ${this.navItem(current,'dashboard','Dashboard','Visão geral')}
@@ -100,9 +101,9 @@ MM.ui = {
     this.setHTML('topbar', `
       <div class="panel section topbar-mobile-compact">
         <div class="topbar-brand-row">
-          <div class="topbar-brand-mark">MM</div>
+          <div class="topbar-brand-mark topbar-brand-mark-logo"><img src="./assets/logo-home-rs.png" alt="Residência Financeira" class="topbar-brand-logo" /></div>
           <div class="topbar-brand-copy">
-            <div class="topbar-brand-title">${MM.config.APP_NAME}</div>
+            <div class="topbar-brand-title topbar-brand-title-logo">Residência Financeira</div>
             <div class="topbar-brand-version">v${MM.config.APP_VERSION}</div>
           </div>
           <div class="topbar-house-chip">${house}</div>
@@ -115,6 +116,7 @@ MM.ui = {
               <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
               <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
               <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
+              <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
             </div>
             <div id="cloud-sync-message" class="topbar-saved-text">${syncMessage} · ${cloudTime}</div>
             <div class="topbar-saved-text">Atualizado ${saved}</div>
@@ -144,6 +146,19 @@ MM.ui = {
         MM.ui.showToast(err.message || 'Erro ao baixar da nuvem.', 'error');
       }
     };
+    var signOutBtn = document.getElementById('topbar-signout-btn');
+    if(signOutBtn){
+      signOutBtn.onclick = async function(){
+        try {
+          await MM.auth.signOut();
+          MM.stateApi.initialize();
+          MM.app.render();
+          MM.ui.showToast('Sessão encerrada com sucesso.', 'info');
+        } catch(err) {
+          MM.ui.showToast(err.message || 'Erro ao sair da conta.', 'error');
+        }
+      };
+    }
   },
 
   renderCloudStatusOnly: function(){
