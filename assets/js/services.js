@@ -183,7 +183,7 @@ MM.services = {
       var dueDate = year + '-' + String(mm).padStart(2,'0') + '-' + String(day).padStart(2,'0');
       created.push(MM.models.createMovement({ householdId: MM.state.household.id, type: t.type, description: t.description, category: t.category, recurrence: 'fixa', belongsTo: t.belongsTo, settledBy: '', competence: month, amount: t.amount, dueDate: dueDate, settledDate: '', note: t.note, origin: 'automatica', templateId: t.id }));
     });
-    if(created.length){ MM.state.movements = MM.state.movements.concat(created); MM.storage.syncFromState(); }
+    if(created.length){ MM.state.movements = MM.state.movements.concat(created); MM.storage.syncFromState().catch(function(err){ console.error(err); }); }
     return created;
   },
   calculateMonthlySummary: function(month){

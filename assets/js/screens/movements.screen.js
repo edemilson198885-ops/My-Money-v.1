@@ -67,7 +67,7 @@ MM.movementsScreen = {
       renderRows();
     }
 
-    function settleMovement(id, mode){
+    async function settleMovement(id, mode){
       var createdNext = null;
       MM.state.movements = MM.state.movements.map(function(item){
         if(item.id !== id) return item;
@@ -88,7 +88,7 @@ MM.movementsScreen = {
         createdNext = MM.services.createNextRecurringMovementOnSettle(settledMovement);
       }
 
-      MM.storage.syncFromState();
+      await MM.storage.syncFromState();
       renderRows();
       MM.ui.renderTopbar();
 
@@ -147,13 +147,13 @@ MM.movementsScreen = {
       });
 
       document.querySelectorAll('.quick-pay-btn').forEach(function(btn){
-        btn.onclick = function(e){
+        btn.onclick = async function(e){
           e.stopPropagation();
           var id = btn.dataset.id;
           var movement = MM.state.movements.find(function(item){ return item.id === id; });
           if(!movement) return;
           if(!confirm('Confirmar pagamento de ' + MM.helpers.formatCurrency(movement.amount) + '?')) return;
-          settleMovement(id, 'quick');
+          settleMovement(id, 'quick').catch(function(err){ MM.ui.showFeedback('movements-feedback', err.message || 'Erro ao sincronizar movimentação.', 'error'); });
         };
       });
 
@@ -173,22 +173,26 @@ MM.movementsScreen = {
       });
 
       document.querySelectorAll('.delete-movement-btn').forEach(function(btn){
-        btn.onclick = function(e){
+        btn.onclick = async function(e){
           e.stopPropagation();
           var id=e.target.dataset.id;
           if(!confirm('Excluir esta movimentação?')) return;
           MM.state.movements = MM.state.movements.filter(function(item){ return item.id !== id; });
           if(MM.state.expandedMovementId === id) MM.state.expandedMovementId = null;
-          MM.storage.syncFromState();
-          renderRows();
-          MM.ui.renderTopbar();
+          try {
+            await MM.storage.syncFromState();
+            renderRows();
+            MM.ui.renderTopbar();
+          } catch (err) {
+            MM.ui.showFeedback('movements-feedback', err.message || 'Erro ao excluir movimentação.', 'error');
+          }
         };
       });
 
       document.querySelectorAll('.settle-movement-btn').forEach(function(btn){
         btn.onclick = function(e){
           e.stopPropagation();
-          settleMovement(e.target.dataset.id, 'detail');
+          settleMovement(e.target.dataset.id, 'detail').catch(function(err){ MM.ui.showFeedback('movements-feedback', err.message || 'Erro ao sincronizar movimentação.', 'error'); });
         };
       });
     }

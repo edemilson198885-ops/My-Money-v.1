@@ -1,7 +1,7 @@
 window.MM = window.MM || {};
 MM.app = {
-  hydrate: function(){
-    var data = MM.storage.loadAppData();
+  hydrate: async function(){
+    var data = await MM.storage.loadAppData();
     if(data.config && data.config.household){
       MM.state.household = data.config.household;
       MM.state.users = data.config.users || [];
@@ -37,12 +37,26 @@ MM.app = {
     MM.router.renderCurrent();
     MM.ui.animateScreen();
   },
-  boot: function(){
+  boot: async function(){
     document.title = MM.config.APP_NAME;
     MM.stateApi.initialize();
-    this.hydrate();
+    await this.hydrate();
     this.registerScreens();
     MM.events.bindGlobal();
+
+    await MM.auth.onAuthChange(async function(event) {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        await MM.app.hydrate();
+        MM.app.render();
+      }
+
+      if (event === 'SIGNED_OUT') {
+        MM.stateApi.initialize();
+        MM.setupScreen.resetTemp();
+        MM.app.render();
+      }
+    });
+
     this.render();
   }
 };

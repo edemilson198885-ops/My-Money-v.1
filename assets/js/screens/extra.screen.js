@@ -23,7 +23,7 @@ MM.extraScreen = {
     `);
 
     document.getElementById('extra-cancel-btn').onclick = function(){ MM.router.goTo(MM.config.SCREENS.DASHBOARD); };
-    document.getElementById('extra-save-btn').onclick = function(){
+    document.getElementById('extra-save-btn').onclick = async function(){
       try{
         var movement = MM.models.createMovement({
           householdId: MM.state.household.id,
@@ -54,7 +54,7 @@ MM.extraScreen = {
         MM.services.validateMovement(movement);
 
         MM.state.movements.push(movement);
-        MM.storage.syncFromState();
+        await MM.storage.syncFromState();
         MM.router.goTo(MM.config.SCREENS.DASHBOARD);
       }catch(err){
         MM.ui.showFeedback('extra-feedback', err.message || 'Erro ao salvar despesa extra.', 'error');

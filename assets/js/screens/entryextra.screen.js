@@ -30,7 +30,7 @@ MM.entryExtraScreen = {
       MM.router.goTo(editing ? MM.config.SCREENS.MOVEMENTS : MM.config.SCREENS.DASHBOARD);
     };
 
-    document.getElementById('entry-extra-save-btn').onclick = function(){
+    document.getElementById('entry-extra-save-btn').onclick = async function(){
       try{
         var receiveDate = document.getElementById('entry-extra-date').value;
         var movement = MM.models.createMovement({
@@ -67,7 +67,7 @@ MM.entryExtraScreen = {
         }
 
         MM.state.editingMovementId = null;
-        MM.storage.syncFromState();
+        await MM.storage.syncFromState();
         MM.router.goTo(MM.config.SCREENS.DASHBOARD);
       }catch(err){
         MM.ui.showFeedback('entry-extra-feedback', err.message || 'Erro ao salvar entrada extra.', 'error');

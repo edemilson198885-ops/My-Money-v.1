@@ -43,7 +43,7 @@ MM.settingsScreen = {
             <div class="panel section settings-section">
               <h3 style="margin-top:0">Sistema</h3>
               <div class="actions-inline">
-                <button class="btn danger" id="reset-local-btn" type="button">Limpar dados locais</button>
+                <button class="btn danger" id="reset-local-btn" type="button">Sair deste dispositivo</button>
               </div>
             </div>
           </div>
@@ -73,7 +73,7 @@ MM.settingsScreen = {
       MM.settingsScreen.render();
     };
 
-    document.getElementById('save-settings-btn').onclick = function(){
+    document.getElementById('save-settings-btn').onclick = async function(){
       try{
         var newHouseName = document.getElementById('settings-household-name').value.trim();
         var updatedUsers = MM.state.users.map(function(u){
@@ -84,7 +84,7 @@ MM.settingsScreen = {
         MM.services.validateUsersForSettings(updatedUsers);
         MM.state.household.name = newHouseName || MM.state.household.name;
         MM.state.users = updatedUsers;
-        MM.storage.syncFromState();
+        await MM.storage.syncFromState();
         MM.app.render();
         MM.ui.showFeedback('settings-feedback', 'Configurações salvas com sucesso.', 'info');
       }catch(err){
@@ -117,9 +117,9 @@ MM.settingsScreen = {
       e.target.value = '';
     };
 
-    document.getElementById('reset-local-btn').onclick = function(){
-      if(!confirm('Tem certeza que deseja apagar todos os dados locais?')) return;
-      MM.storage.resetLocalData();
+    document.getElementById('reset-local-btn').onclick = async function(){
+      if(!confirm('Tem certeza que deseja sair da conta neste dispositivo?')) return;
+      await MM.storage.resetLocalData();
       MM.stateApi.initialize();
       MM.setupScreen.resetTemp();
       MM.app.render();

@@ -19,7 +19,7 @@ MM.entryScreen = {
     `);
 
     document.getElementById('entry-cancel-btn').onclick = function(){ MM.state.editingMovementId = null; MM.router.goTo(MM.config.SCREENS.MOVEMENTS); };
-    document.getElementById('entry-save-btn').onclick = function(){
+    document.getElementById('entry-save-btn').onclick = async function(){
       try{
         var movement = MM.models.createMovement({ id: editing ? editing.id : undefined, householdId: MM.state.household.id, type: 'entrada', description: document.getElementById('entry-description').value, category: '', recurrence: document.getElementById('entry-recurrence').value, belongsTo: document.getElementById('entry-belongs').value, settledBy: editing ? editing.settledBy : '', competence: MM.state.currentMonth, amount: MM.helpers.parseCurrency(document.getElementById('entry-amount').value), dueDate: document.getElementById('entry-due-date').value, settledDate: editing ? editing.settledDate : '', note: document.getElementById('entry-note').value, origin: editing ? editing.origin : 'manual', templateId: editing ? editing.templateId : null });
         var movementMonth = movement.dueDate ? movement.dueDate.slice(0,7) : '';
@@ -31,7 +31,7 @@ MM.entryScreen = {
         MM.services.createOrUpdateTemplateFromMovement(movement);
         if(editing){ MM.state.movements = MM.state.movements.map(function(item){ return item.id === movement.id ? movement : item; }); } else { MM.state.movements.push(movement); }
         MM.state.editingMovementId = null;
-        MM.storage.syncFromState();
+        await MM.storage.syncFromState();
         MM.router.goTo(MM.config.SCREENS.DASHBOARD);
       }catch(err){ MM.ui.showFeedback('entry-feedback', err.message || 'Erro ao salvar entrada.', 'error'); }
     };
