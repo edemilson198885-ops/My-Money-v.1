@@ -1,6 +1,6 @@
 {
-  "name": "My Money",
-  "short_name": "My Money",
+  "name": "Residência Financeira",
+  "short_name": "Residência",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f5f1ff",
