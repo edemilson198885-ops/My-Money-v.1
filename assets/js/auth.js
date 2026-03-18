@@ -17,15 +17,23 @@ MM.auth = {
   },
 
   async getSession() {
-    const { data, error } = await MM.supabase.auth.getSession();
-    if (error) throw error;
-    return data.session || null;
+    try {
+      const { data, error } = await MM.supabase.auth.getSession();
+      if (error) return null;
+      return data.session || null;
+    } catch (e) {
+      return null;
+    }
   },
 
   async getUser() {
-    const { data, error } = await MM.supabase.auth.getUser();
-    if (error) throw error;
-    return data.user || null;
+    try {
+      const session = await this.getSession();
+      if (!session || !session.user) return null;
+      return session.user;
+    } catch (e) {
+      return null;
+    }
   },
 
   async signOut() {
