@@ -1,21 +1,11 @@
-# My Money + Supabase
+My Money com Supabase
 
-## Já configurado neste pacote
-- Cliente Supabase apontando para o projeto informado
-- Login por magic link
-- Setup inicial da residência
-- Sincronização de households, profiles, members, templates e movements
+1. Rode o patch SQL `supabase_patch_allow_extra.sql` no SQL Editor do Supabase.
+2. Substitua os arquivos do repositório por este pacote.
+3. Faça commit/push.
+4. Espere o GitHub Pages publicar.
+5. Abra o app e faça login por e-mail.
 
-## Antes de publicar
-1. Suba os arquivos para o repositório do GitHub Pages.
-2. No Supabase, mantenha estas URLs:
-   - Site URL: https://edemilson198885-ops.github.io
-   - Redirect URL: https://edemilson198885-ops.github.io/My-Money-v.1/
-3. Rode também o arquivo `supabase_patch_allow_extra.sql` no SQL Editor.
-
-## Primeiro teste
-1. Abra o app publicado.
-2. Digite seu e-mail e peça o magic link.
-3. Clique no link do e-mail.
-4. Volte ao app e crie a residência.
-5. Confira as tabelas `households`, `profiles` e `members`.
+URLs configuradas:
+- Site URL: https://edemilson198885-ops.github.io
+- Redirect URL: https://edemilson198885-ops.github.io/My-Money-v.1/

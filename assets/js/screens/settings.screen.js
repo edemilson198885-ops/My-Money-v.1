@@ -43,7 +43,7 @@ MM.settingsScreen = {
             <div class="panel section settings-section">
               <h3 style="margin-top:0">Sistema</h3>
               <div class="actions-inline">
-                <button class="btn danger" id="reset-local-btn" type="button">Sair deste dispositivo</button>
+                <button class="btn danger" id="reset-local-btn" type="button">Sair desta conta</button>
               </div>
             </div>
           </div>

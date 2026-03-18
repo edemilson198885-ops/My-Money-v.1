@@ -17,7 +17,7 @@ MM.templatesScreen = {
       body.innerHTML = MM.state.templates.length ? MM.state.templates.map(function(t){
         return `<tr><td><strong>${t.description}</strong></td><td><span class="badge ${t.type}">${t.type}</span></td><td>${t.category}</td><td>${MM.helpers.userName(t.belongsTo)}</td><td>${MM.helpers.formatCurrency(t.amount)}</td><td>${String(t.dueDay).padStart(2,'0')}</td><td>${t.active ? '<span class="badge ativo">ativo</span>' : '<span class="badge inativo">inativo</span>'}</td><td><button class="btn secondary toggle-template-btn" data-id="${t.id}" type="button">${t.active ? 'Desativar' : 'Ativar'}</button></td></tr>`;
       }).join('') : '<tr><td colspan="8" class="muted">Nenhum template automático cadastrado.</td></tr>';
-      document.querySelectorAll('.toggle-template-btn').forEach(function(btn){ btn.onclick = async function(e){ var id = e.target.dataset.id; MM.state.templates = MM.state.templates.map(function(t){ if(t.id === id) t.active = !t.active; return t; }); try { await MM.storage.syncFromState(); renderRows(); } catch (err) { MM.ui.showToast(err.message || 'Erro ao atualizar template.', 'error'); } }; });
+      document.querySelectorAll('.toggle-template-btn').forEach(function(btn){ btn.onclick = function(e){ var id = e.target.dataset.id; MM.state.templates = MM.state.templates.map(function(t){ if(t.id === id) t.active = !t.active; return t; }); MM.storage.syncFromState(); renderRows(); }; });
     }
     document.getElementById('generate-current-month-btn').onclick = function(){ MM.services.generateFixedForMonth(MM.state.currentMonth); MM.app.render(); };
     renderRows();

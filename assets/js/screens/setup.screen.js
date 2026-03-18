@@ -1,43 +1,80 @@
 window.MM = window.MM || {};
+
 MM.setupScreen = (function(){
   var tempUsers = [];
-  function renderUsers(){
-    var list = document.getElementById('setup-users-list'); if(!list) return;
-    list.innerHTML = tempUsers.map(function(user, index){
-      return `<div class="user-row"><input class="setup-user-input" data-index="${index}" value="${user.name}" placeholder="Nome do usuário ${index + 1}" /><button class="btn secondary remove-setup-user" data-index="${index}" type="button">Remover</button></div>`;
-    }).join('');
-    document.querySelectorAll('.setup-user-input').forEach(function(input){ input.oninput = function(e){ var idx = Number(e.target.dataset.index); if(tempUsers[idx]) tempUsers[idx].name = e.target.value; }; });
-    document.querySelectorAll('.remove-setup-user').forEach(function(btn){ btn.onclick = function(e){ tempUsers.splice(Number(e.target.dataset.index), 1); renderUsers(); }; });
-  }
-  function addUser(name){ if(tempUsers.length >= MM.config.MAX_USERS){ MM.ui.showFeedback('setup-feedback','Máximo de ' + MM.config.MAX_USERS + ' usuários.','error'); return; } tempUsers.push({ name:name||'' }); renderUsers(); }
 
-  async function handleLogin(){
-    try{
+  function renderUsers() {
+    var list = document.getElementById('setup-users-list');
+    if (!list) return;
+
+    list.innerHTML = tempUsers.map(function(user, index){
+      return `
+        <div class="user-row">
+          <input class="setup-user-input" data-index="${index}" value="${user.name}" placeholder="Nome do usuário ${index + 1}" />
+          <button class="btn secondary remove-setup-user" data-index="${index}" type="button">Remover</button>
+        </div>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.setup-user-input').forEach(function(input){
+      input.oninput = function(e){
+        var idx = Number(e.target.dataset.index);
+        if (tempUsers[idx]) tempUsers[idx].name = e.target.value;
+      };
+    });
+
+    document.querySelectorAll('.remove-setup-user').forEach(function(btn){
+      btn.onclick = function(e){
+        tempUsers.splice(Number(e.target.dataset.index), 1);
+        renderUsers();
+      };
+    });
+  }
+
+  function addUser(name) {
+    if (tempUsers.length >= MM.config.MAX_USERS) {
+      MM.ui.showFeedback('setup-feedback', 'Máximo de ' + MM.config.MAX_USERS + ' usuários.', 'error');
+      return;
+    }
+    tempUsers.push({ name: name || '' });
+    renderUsers();
+  }
+
+  async function handleLogin() {
+    try {
       var email = document.getElementById('setup-email').value.trim();
       await MM.auth.signInWithEmail(email);
       MM.ui.showFeedback('setup-feedback', 'Verifique seu e-mail e clique no link de acesso.', 'info');
-    }catch(err){ MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao enviar magic link.', 'error'); }
+    } catch (err) {
+      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao enviar magic link.', 'error');
+    }
   }
 
-  async function handleSubmit(){
-    try{
+  async function handleSubmit() {
+    try {
       var householdName = document.getElementById('setup-household-name').value;
       MM.services.validateHouseholdConfig({ householdName: householdName, users: tempUsers });
+
       await MM.storage.bootstrapInitialData(householdName, tempUsers);
+
       var data = await MM.storage.loadAppData();
-      if(data.config && data.config.household){
+
+      if (data.config && data.config.household) {
         MM.state.household = data.config.household;
         MM.state.users = data.config.users || [];
         MM.state.movements = data.movements || [];
         MM.state.templates = data.templates || [];
         MM.state.currentScreen = MM.config.SCREENS.DASHBOARD;
       }
+
       MM.app.render();
       MM.ui.showFeedback('setup-feedback', 'Configuração inicial concluída com sucesso.', 'info');
-    }catch(err){ MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao criar residência.', 'error'); }
+    } catch (err) {
+      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao criar residência.', 'error');
+    }
   }
 
-  async function render(){
+  async function render() {
     var session = await MM.auth.getSession();
     var isLogged = !!session;
 
@@ -47,30 +84,57 @@ MM.setupScreen = (function(){
           <h2 style="margin-top:0">Primeiros passos</h2>
 
           ${!isLogged ? `
-            <div class="field"><label>Seu e-mail</label><input id="setup-email" type="email" placeholder="seuemail@exemplo.com" /></div>
+            <div class="field">
+              <label>Seu e-mail</label>
+              <input id="setup-email" type="email" placeholder="seuemail@exemplo.com" />
+            </div>
             <button class="btn primary" id="send-magic-link-btn" type="button">Entrar por e-mail</button>
             <div style="height:16px"></div>
           ` : `
-            <div class="feedback" style="display:block;background:#eef8ff;color:#145ea8;border:1px solid #c8e4ff;">Você já está autenticado. Agora crie sua residência.</div>
+            <div class="feedback" style="display:block;background:#eef8ff;color:#145ea8;border:1px solid #c8e4ff;">
+              Você já está autenticado. Agora crie sua residência.
+            </div>
           `}
 
-          <div class="field"><label>Nome da residência</label><input id="setup-household-name" placeholder="Ex.: Casa da família" ${!isLogged ? 'disabled' : ''} /></div>
           <div class="field">
-            <div class="row"><label>Usuários</label><button class="btn secondary" id="add-setup-user-btn" type="button" ${!isLogged ? 'disabled' : ''}>+ Adicionar usuário</button></div>
+            <label>Nome da residência</label>
+            <input id="setup-household-name" placeholder="Ex.: Casa da família" ${!isLogged ? 'disabled' : ''} />
+          </div>
+
+          <div class="field">
+            <div class="row">
+              <label>Usuários</label>
+              <button class="btn secondary" id="add-setup-user-btn" type="button" ${!isLogged ? 'disabled' : ''}>+ Adicionar usuário</button>
+            </div>
             <div id="setup-users-list"></div>
           </div>
+
           <button class="btn primary" id="save-setup-btn" type="button" ${!isLogged ? 'disabled' : ''}>Iniciar sistema</button>
-          <div class="feedback" id="setup-feedback">${isLogged ? 'Você já pode criar a residência.' : 'Entre com seu e-mail para começar.'}</div>
+          <div class="feedback" id="setup-feedback">Entre com seu e-mail para começar.</div>
         </div>
       </section>
     `);
-    if(tempUsers.length === 0) addUser('');
+
+    if (tempUsers.length === 0) addUser('');
+
     renderUsers();
+
     var loginBtn = document.getElementById('send-magic-link-btn');
     if (loginBtn) loginBtn.onclick = handleLogin;
-    document.getElementById('add-setup-user-btn').onclick = function(){ addUser(''); };
-    document.getElementById('save-setup-btn').onclick = handleSubmit;
+
+    var addBtn = document.getElementById('add-setup-user-btn');
+    if (addBtn) addBtn.onclick = function(){ addUser(''); };
+
+    var saveBtn = document.getElementById('save-setup-btn');
+    if (saveBtn) saveBtn.onclick = handleSubmit;
   }
-  function resetTemp(){ tempUsers = []; }
-  return { render: render, resetTemp: resetTemp };
+
+  function resetTemp() {
+    tempUsers = [];
+  }
+
+  return {
+    render: render,
+    resetTemp: resetTemp
+  };
 })();

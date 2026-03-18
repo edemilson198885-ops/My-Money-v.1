@@ -10,7 +10,17 @@ MM.models = {
       updatedAt: now
     };
   },
-  createUser: function(data){ var now = MM.helpers.nowIso(); return { id:data.id||MM.helpers.generateId(), householdId:data.householdId, name:String(data.name||'').trim(), inactive:!!data.inactive, createdAt:data.createdAt||now, updatedAt:now }; },
+  createUser: function(data){
+    var now = MM.helpers.nowIso();
+    return {
+      id: data.id || MM.helpers.generateId(),
+      householdId: data.householdId,
+      name: String(data.name || '').trim(),
+      inactive: !!data.inactive,
+      createdAt: data.createdAt || now,
+      updatedAt: now
+    };
+  },
   createMovement: function(data){
     var now = MM.helpers.nowIso();
     return {

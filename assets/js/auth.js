@@ -20,7 +20,7 @@ MM.auth = {
     try {
       const { data, error } = await MM.supabase.auth.getSession();
       if (error) return null;
-      return data.session || null;
+      return data && data.session ? data.session : null;
     } catch (e) {
       return null;
     }
@@ -37,14 +37,22 @@ MM.auth = {
   },
 
   async signOut() {
-    const { error } = await MM.supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      const { error } = await MM.supabase.auth.signOut();
+      if (error) throw error;
+    } catch (e) {
+      throw e;
+    }
   },
 
   async onAuthChange(callback) {
     const { data } = MM.supabase.auth.onAuthStateChange(function(event, session) {
       if (typeof callback === 'function') {
-        callback(event, session);
+        try {
+          callback(event, session);
+        } catch (e) {
+          console.error('onAuthChange callback error:', e);
+        }
       }
     });
     return data.subscription;

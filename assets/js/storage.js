@@ -1,4 +1,5 @@
 window.MM = window.MM || {};
+
 MM.storage = {
   async ensureProfile() {
     const user = await MM.auth.getUser();
@@ -15,9 +16,89 @@ MM.storage = {
   },
 
   async loadAppData() {
-    const user = await MM.auth.getUser();
+    try {
+      const user = await MM.auth.getUser();
 
-    if (!user) {
+      if (!user) {
+        return {
+          config: null,
+          movements: [],
+          templates: [],
+          ui: MM.state.ui
+        };
+      }
+
+      const { data: profile, error: profileError } = await MM.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (!profile || !profile.household_id) {
+        return {
+          config: null,
+          movements: [],
+          templates: [],
+          ui: MM.state.ui
+        };
+      }
+
+      const householdId = profile.household_id;
+
+      const [
+        householdRes,
+        membersRes,
+        templatesRes,
+        movementsRes
+      ] = await Promise.all([
+        MM.supabase
+          .from('households')
+          .select('*')
+          .eq('id', householdId)
+          .single(),
+
+        MM.supabase
+          .from('members')
+          .select('*')
+          .eq('household_id', householdId)
+          .order('created_at', { ascending: true }),
+
+        MM.supabase
+          .from('templates')
+          .select('*')
+          .eq('household_id', householdId)
+          .order('created_at', { ascending: true }),
+
+        MM.supabase
+          .from('movements')
+          .select('*')
+          .eq('household_id', householdId)
+          .order('created_at', { ascending: true })
+      ]);
+
+      if (householdRes.error) throw householdRes.error;
+      if (membersRes.error) throw membersRes.error;
+      if (templatesRes.error) throw templatesRes.error;
+      if (movementsRes.error) throw movementsRes.error;
+
+      const household = this.mapHouseholdFromDb(householdRes.data);
+      const users = (membersRes.data || []).map(this.mapUserFromDb);
+      const templates = (templatesRes.data || []).map(this.mapTemplateFromDb);
+      const movements = (movementsRes.data || []).map(this.mapMovementFromDb);
+
+      return {
+        config: {
+          household: household,
+          users: users
+        },
+        movements: movements,
+        templates: templates,
+        ui: MM.state.ui
+      };
+    } catch (err) {
+      console.error('loadAppData error:', err);
       return {
         config: null,
         movements: [],
@@ -25,59 +106,11 @@ MM.storage = {
         ui: MM.state.ui
       };
     }
-
-    const { data: profile, error: profileError } = await MM.supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profileError) throw profileError;
-
-    if (!profile || !profile.household_id) {
-      return {
-        config: null,
-        movements: [],
-        templates: [],
-        ui: MM.state.ui
-      };
-    }
-
-    const householdId = profile.household_id;
-
-    const [
-      householdRes,
-      membersRes,
-      templatesRes,
-      movementsRes
-    ] = await Promise.all([
-      MM.supabase.from('households').select('*').eq('id', householdId).single(),
-      MM.supabase.from('members').select('*').eq('household_id', householdId).order('created_at', { ascending: true }),
-      MM.supabase.from('templates').select('*').eq('household_id', householdId).order('created_at', { ascending: true }),
-      MM.supabase.from('movements').select('*').eq('household_id', householdId).order('created_at', { ascending: true })
-    ]);
-
-    if (householdRes.error) throw householdRes.error;
-    if (membersRes.error) throw membersRes.error;
-    if (templatesRes.error) throw templatesRes.error;
-    if (movementsRes.error) throw movementsRes.error;
-
-    const household = this.mapHouseholdFromDb(householdRes.data);
-    const users = (membersRes.data || []).map(this.mapUserFromDb);
-    const templates = (templatesRes.data || []).map(this.mapTemplateFromDb);
-    const movements = (movementsRes.data || []).map(this.mapMovementFromDb);
-
-    return {
-      config: { household: household, users: users },
-      movements: movements,
-      templates: templates,
-      ui: MM.state.ui
-    };
   },
 
   async bootstrapInitialData(householdName, users) {
     const currentUser = await MM.auth.getUser();
-    if (!currentUser) throw new Error('Usuário não autenticado.');
+    if (!currentUser) throw new Error('Faça login por e-mail primeiro.');
 
     const profile = await this.ensureProfile();
     if (profile && profile.household_id) {
@@ -95,16 +128,22 @@ MM.storage = {
     if (!data || !data.household_id) throw new Error('Não foi possível criar a residência.');
 
     const householdId = data.household_id;
-    const membersPayload = (users || []).map(function(u) {
-      return {
-        household_id: householdId,
-        name: String(u.name || '').trim(),
-        inactive: false
-      };
-    }).filter(function(u) { return !!u.name; });
+
+    const membersPayload = (users || [])
+      .map(function(u) {
+        return {
+          household_id: householdId,
+          name: String(u.name || '').trim(),
+          inactive: false
+        };
+      })
+      .filter(function(u) { return !!u.name; });
 
     if (membersPayload.length) {
-      const { error: membersError } = await MM.supabase.from('members').insert(membersPayload);
+      const { error: membersError } = await MM.supabase
+        .from('members')
+        .insert(membersPayload);
+
       if (membersError) throw membersError;
     }
 
@@ -114,17 +153,13 @@ MM.storage = {
   async syncFromState() {
     if (!MM.state.household || !MM.state.household.id) return;
 
-    const user = await MM.auth.getUser();
-    if (!user) throw new Error('Faça login para sincronizar os dados.');
-
     const householdId = MM.state.household.id;
-    const householdPayload = {
-      id: householdId,
-      name: MM.state.household.name,
-      owner_id: MM.state.household.ownerId || user.id
-    };
 
-    MM.state.household.ownerId = householdPayload.owner_id;
+    const householdPayload = {
+      id: MM.state.household.id,
+      name: MM.state.household.name,
+      owner_id: MM.state.household.ownerId
+    };
 
     const { error: householdError } = await MM.supabase
       .from('households')
@@ -163,8 +198,8 @@ MM.storage = {
         household_id: householdId,
         type: m.type,
         description: m.description,
-        category: m.category || '',
-        recurrence: (m.recurrence === 'extra' ? 'extra' : (m.recurrence || 'variavel')),
+        category: m.category,
+        recurrence: m.recurrence || 'variavel',
         belongs_to: m.belongsTo,
         settled_by: m.settledBy || '',
         competence: m.competence,
@@ -177,14 +212,13 @@ MM.storage = {
       };
     });
 
-    const [oldMemberIdsRes, oldTemplateIdsRes, oldMovementIdsRes] = await Promise.all([
-      MM.supabase.from('members').select('id').eq('household_id', householdId),
-      MM.supabase.from('templates').select('id').eq('household_id', householdId),
-      MM.supabase.from('movements').select('id').eq('household_id', householdId)
-    ]);
-
+    const oldMemberIdsRes = await MM.supabase.from('members').select('id').eq('household_id', householdId);
     if (oldMemberIdsRes.error) throw oldMemberIdsRes.error;
+
+    const oldTemplateIdsRes = await MM.supabase.from('templates').select('id').eq('household_id', householdId);
     if (oldTemplateIdsRes.error) throw oldTemplateIdsRes.error;
+
+    const oldMovementIdsRes = await MM.supabase.from('movements').select('id').eq('household_id', householdId);
     if (oldMovementIdsRes.error) throw oldMovementIdsRes.error;
 
     const currentMemberIds = membersPayload.map(function(x) { return x.id; });
@@ -228,7 +262,7 @@ MM.storage = {
     MM.state.ui.lastSavedAt = new Date().toISOString();
   },
 
-  exportBackup() {
+  exportBackup: function(){
     var payload = {
       app: 'My Money',
       version: 'supabase-v1',
@@ -238,7 +272,6 @@ MM.storage = {
       templates: MM.state.templates,
       ui: MM.state.ui
     };
-
     var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -250,41 +283,38 @@ MM.storage = {
     URL.revokeObjectURL(url);
   },
 
-  importBackupFile: function(file, onDone, onError) {
+  importBackupFile: function(file, onDone, onError){
     var reader = new FileReader();
 
-    reader.onload = async function() {
-      try {
+    reader.onload = async function(){
+      try{
         var data = JSON.parse(reader.result);
-
-        if (!data || !data.config || !data.config.household || !Array.isArray(data.config.users) || !Array.isArray(data.movements) || !Array.isArray(data.templates)) {
+        if(!data || !data.config || !data.config.household || !Array.isArray(data.config.users) || !Array.isArray(data.movements) || !Array.isArray(data.templates)){
           throw new Error('Arquivo de backup inválido.');
         }
-
-        var user = await MM.auth.getUser();
-        MM.state.household = Object.assign({}, data.config.household, { ownerId: (data.config.household.ownerId || (user && user.id) || null) });
+        MM.state.household = data.config.household;
         MM.state.users = data.config.users;
         MM.state.movements = data.movements;
         MM.state.templates = data.templates;
         MM.state.ui = data.ui || MM.state.ui;
         MM.state.currentScreen = MM.config.SCREENS.DASHBOARD;
-
         await MM.storage.syncFromState();
-
-        if (onDone) onDone();
-      } catch (err) {
-        if (onError) onError(err);
+        if(onDone) onDone();
+      }catch(err){
+        if(onError) onError(err);
       }
     };
 
     reader.readAsText(file, 'utf-8');
   },
 
-  resetLocalData: async function() {
-    try { await MM.auth.signOut(); } catch (e) {}
+  resetLocalData: async function(){
+    try {
+      await MM.auth.signOut();
+    } catch (e) {}
   },
 
-  mapHouseholdFromDb(row) {
+  mapHouseholdFromDb: function(row) {
     if (!row) return null;
     return {
       id: row.id,
@@ -295,7 +325,7 @@ MM.storage = {
     };
   },
 
-  mapUserFromDb(row) {
+  mapUserFromDb: function(row) {
     return {
       id: row.id,
       householdId: row.household_id,
@@ -306,7 +336,7 @@ MM.storage = {
     };
   },
 
-  mapTemplateFromDb(row) {
+  mapTemplateFromDb: function(row) {
     return {
       id: row.id,
       householdId: row.household_id,
@@ -323,7 +353,7 @@ MM.storage = {
     };
   },
 
-  mapMovementFromDb(row) {
+  mapMovementFromDb: function(row) {
     return {
       id: row.id,
       householdId: row.household_id,
