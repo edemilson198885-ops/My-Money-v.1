@@ -940,3 +940,20 @@ input:focus,select:focus,textarea:focus{border-color:#c9b3ff;box-shadow:0 0 0 4p
     height:88px!important;
   }
 }
+
+
+.cloud-sync-wrap{display:grid;gap:8px}
+.cloud-sync-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sync-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-weight:800;font-size:.82rem;border:1px solid transparent}
+.sync-pill::before{content:'';width:10px;height:10px;border-radius:50%;display:inline-block}
+.sync-pill.online{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.sync-pill.online::before{background:#16a34a}
+.sync-pill.offline{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+.sync-pill.offline::before{background:#dc2626}
+.sync-pill.sending{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.sync-pill.sending::before{background:#f59e0b}
+.sync-pill.receiving{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
+.sync-pill.receiving::before{background:#3b82f6}
+@media (max-width:980px){
+  .cloud-sync-row .btn{flex:1 1 140px}
+}

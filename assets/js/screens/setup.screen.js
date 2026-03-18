@@ -64,7 +64,7 @@ MM.setupScreen = (function(){
 
       await MM.storage.bootstrapInitialData(householdName, tempUsers);
 
-      var data = await MM.storage.loadAppData();
+      var data = await MM.storage.loadAppData({ silent: true });
 
       if (data.config && data.config.household) {
         MM.state.household = data.config.household;

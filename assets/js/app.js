@@ -3,14 +3,13 @@ window.MM = window.MM || {};
 MM.app = {
   hydrate: async function() {
     try {
-      var data = await MM.storage.loadAppData();
-
+      var data = await MM.storage.loadAppData({ silent: true });
       if (data.config && data.config.household) {
         MM.state.household = data.config.household;
         MM.state.users = data.config.users || [];
         MM.state.movements = data.movements || [];
         MM.state.templates = data.templates || [];
-        MM.state.ui = data.ui || MM.state.ui;
+        MM.state.ui = Object.assign({}, MM.state.ui, data.ui || {});
         MM.state.currentScreen = MM.config.SCREENS.DASHBOARD;
       } else {
         MM.state.currentScreen = MM.config.SCREENS.SETUP;
@@ -38,16 +37,13 @@ MM.app = {
   render: function() {
     var root = document.getElementById('app-root');
     var hasHousehold = !!MM.state.household;
-
-    if (root) {
-      root.style.gridTemplateColumns = hasHousehold ? '260px 1fr' : '1fr';
-    }
-
+    if (root) root.style.gridTemplateColumns = hasHousehold ? '260px 1fr' : '1fr';
     MM.ui.renderSidebar();
     MM.ui.renderTopbar();
     MM.ui.renderBottomNav();
     MM.router.renderCurrent();
     MM.ui.animateScreen();
+    MM.ui.renderCloudStatusOnly();
   },
 
   boot: async function() {
@@ -55,7 +51,7 @@ MM.app = {
     MM.stateApi.initialize();
     this.registerScreens();
     MM.events.bindGlobal();
-
+    MM.sync.start();
     await this.hydrate();
 
     try {
@@ -63,12 +59,13 @@ MM.app = {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
           await MM.app.hydrate();
           MM.app.render();
+          MM.sync.setStatus(navigator.onLine ? 'online' : 'offline');
         }
-
         if (event === 'SIGNED_OUT') {
           MM.stateApi.initialize();
           MM.setupScreen.resetTemp();
           MM.app.render();
+          MM.sync.setStatus(navigator.onLine ? 'online' : 'offline');
         }
       });
     } catch (e) {
@@ -78,5 +75,4 @@ MM.app = {
     this.render();
   }
 };
-
 window.addEventListener('DOMContentLoaded', function(){ MM.app.boot(); });

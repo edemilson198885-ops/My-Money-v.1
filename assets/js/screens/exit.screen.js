@@ -19,7 +19,7 @@ MM.exitScreen = {
     `);
 
     document.getElementById('exit-cancel-btn').onclick = function(){ MM.state.editingMovementId = null; MM.router.goTo(MM.config.SCREENS.MOVEMENTS); };
-    document.getElementById('exit-save-btn').onclick = function(){
+    document.getElementById('exit-save-btn').onclick = async function(){
       try{
         var movement = MM.models.createMovement({ id: editing ? editing.id : undefined, householdId: MM.state.household.id, type: 'saida', description: document.getElementById('exit-description').value, category: '', recurrence: document.getElementById('exit-recurrence').value, belongsTo: document.getElementById('exit-belongs').value, settledBy: editing ? editing.settledBy : '', competence: MM.state.currentMonth, amount: MM.helpers.parseCurrency(document.getElementById('exit-amount').value), dueDate: document.getElementById('exit-due-date').value, settledDate: editing ? editing.settledDate : '', note: document.getElementById('exit-note').value, origin: editing ? editing.origin : 'manual', templateId: editing ? editing.templateId : null });
         var movementMonth = movement.dueDate ? movement.dueDate.slice(0,7) : '';
@@ -31,7 +31,7 @@ MM.exitScreen = {
         MM.services.createOrUpdateTemplateFromMovement(movement);
         if(editing){ MM.state.movements = MM.state.movements.map(function(item){ return item.id === movement.id ? movement : item; }); } else { MM.state.movements.push(movement); }
         MM.state.editingMovementId = null;
-        MM.storage.syncFromState();
+        await MM.sync.syncNow();
         MM.router.goTo(MM.config.SCREENS.DASHBOARD);
       }catch(err){ MM.ui.showFeedback('exit-feedback', err.message || 'Erro ao salvar saída.', 'error'); }
     };

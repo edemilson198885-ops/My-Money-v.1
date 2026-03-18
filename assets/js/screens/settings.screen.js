@@ -43,6 +43,8 @@ MM.settingsScreen = {
             <div class="panel section settings-section">
               <h3 style="margin-top:0">Sistema</h3>
               <div class="actions-inline">
+                <button class="btn secondary" id="settings-refresh-btn" type="button">Baixar da nuvem</button>
+                <button class="btn primary" id="settings-sync-btn" type="button">Sincronizar agora</button>
                 <button class="btn danger" id="reset-local-btn" type="button">Sair desta conta</button>
               </div>
             </div>
@@ -84,11 +86,31 @@ MM.settingsScreen = {
         MM.services.validateUsersForSettings(updatedUsers);
         MM.state.household.name = newHouseName || MM.state.household.name;
         MM.state.users = updatedUsers;
-        await MM.storage.syncFromState();
+        await MM.sync.syncNow();
         MM.app.render();
         MM.ui.showFeedback('settings-feedback', 'Configurações salvas com sucesso.', 'info');
       }catch(err){
         MM.ui.showFeedback('settings-feedback', err.message || 'Erro ao salvar configurações.', 'error');
+      }
+    };
+
+    document.getElementById('settings-sync-btn').onclick = async function(){
+      try{
+        await MM.sync.syncNow();
+        MM.app.render();
+        MM.ui.showFeedback('settings-feedback', 'Dados enviados para a nuvem.', 'info');
+      }catch(err){
+        MM.ui.showFeedback('settings-feedback', err.message || 'Erro ao sincronizar.', 'error');
+      }
+    };
+
+    document.getElementById('settings-refresh-btn').onclick = async function(){
+      try{
+        await MM.sync.refreshFromCloud();
+        MM.app.render();
+        MM.ui.showFeedback('settings-feedback', 'Dados baixados da nuvem.', 'info');
+      }catch(err){
+        MM.ui.showFeedback('settings-feedback', err.message || 'Erro ao atualizar da nuvem.', 'error');
       }
     };
 

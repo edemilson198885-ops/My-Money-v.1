@@ -88,7 +88,7 @@ MM.movementsScreen = {
         createdNext = MM.services.createNextRecurringMovementOnSettle(settledMovement);
       }
 
-      MM.storage.syncFromState();
+      MM.sync.syncNow().catch(function(err){ console.error('sync error:', err); MM.ui.showToast(err.message || 'Erro ao sincronizar.', 'error'); });
       renderRows();
       MM.ui.renderTopbar();
 
@@ -179,7 +179,7 @@ MM.movementsScreen = {
           if(!confirm('Excluir esta movimentação?')) return;
           MM.state.movements = MM.state.movements.filter(function(item){ return item.id !== id; });
           if(MM.state.expandedMovementId === id) MM.state.expandedMovementId = null;
-          MM.storage.syncFromState();
+          MM.sync.syncNow().catch(function(err){ console.error('sync error:', err); MM.ui.showToast(err.message || 'Erro ao sincronizar.', 'error'); });
           renderRows();
           MM.ui.renderTopbar();
         };
