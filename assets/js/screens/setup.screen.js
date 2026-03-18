@@ -43,10 +43,17 @@ MM.setupScreen = (function(){
   async function handleLogin() {
     try {
       var email = document.getElementById('setup-email').value.trim();
-      await MM.auth.signInWithEmail(email);
-      MM.ui.showFeedback('setup-feedback', 'Verifique seu e-mail e clique no link de acesso.', 'info');
+      var password = document.getElementById('setup-password').value;
+
+      await MM.auth.signInWithPassword(email, password);
+      MM.ui.showFeedback('setup-feedback', 'Login realizado com sucesso.', 'info');
+
+      setTimeout(async function() {
+        await MM.app.hydrate();
+        MM.app.render();
+      }, 300);
     } catch (err) {
-      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao enviar magic link.', 'error');
+      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao entrar.', 'error');
     }
   }
 
@@ -88,7 +95,13 @@ MM.setupScreen = (function(){
               <label>Seu e-mail</label>
               <input id="setup-email" type="email" placeholder="seuemail@exemplo.com" />
             </div>
-            <button class="btn primary" id="send-magic-link-btn" type="button">Entrar por e-mail</button>
+
+            <div class="field">
+              <label>Sua senha</label>
+              <input id="setup-password" type="password" placeholder="Digite sua senha" />
+            </div>
+
+            <button class="btn primary" id="login-btn" type="button">Entrar</button>
             <div style="height:16px"></div>
           ` : `
             <div class="feedback" style="display:block;background:#eef8ff;color:#145ea8;border:1px solid #c8e4ff;">
@@ -110,7 +123,7 @@ MM.setupScreen = (function(){
           </div>
 
           <button class="btn primary" id="save-setup-btn" type="button" ${!isLogged ? 'disabled' : ''}>Iniciar sistema</button>
-          <div class="feedback" id="setup-feedback">Entre com seu e-mail para começar.</div>
+          <div class="feedback" id="setup-feedback">${!isLogged ? 'Entre com e-mail e senha para começar.' : 'Pronto para configurar sua residência.'}</div>
         </div>
       </section>
     `);
@@ -119,7 +132,7 @@ MM.setupScreen = (function(){
 
     renderUsers();
 
-    var loginBtn = document.getElementById('send-magic-link-btn');
+    var loginBtn = document.getElementById('login-btn');
     if (loginBtn) loginBtn.onclick = handleLogin;
 
     var addBtn = document.getElementById('add-setup-user-btn');

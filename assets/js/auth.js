@@ -1,19 +1,20 @@
 window.MM = window.MM || {};
 
 MM.auth = {
-  async signInWithEmail(email) {
+  async signInWithPassword(email, password) {
     email = String(email || '').trim().toLowerCase();
-    if (!email) throw new Error('Informe seu e-mail.');
+    password = String(password || '');
 
-    const { error } = await MM.supabase.auth.signInWithOtp({
+    if (!email) throw new Error('Informe seu e-mail.');
+    if (!password) throw new Error('Informe sua senha.');
+
+    const { data, error } = await MM.supabase.auth.signInWithPassword({
       email: email,
-      options: {
-        emailRedirectTo: 'https://edemilson198885-ops.github.io/My-Money-v.1/'
-      }
+      password: password
     });
 
     if (error) throw error;
-    return true;
+    return data;
   },
 
   async getSession() {
@@ -37,12 +38,8 @@ MM.auth = {
   },
 
   async signOut() {
-    try {
-      const { error } = await MM.supabase.auth.signOut();
-      if (error) throw error;
-    } catch (e) {
-      throw e;
-    }
+    const { error } = await MM.supabase.auth.signOut();
+    if (error) throw error;
   },
 
   async onAuthChange(callback) {
