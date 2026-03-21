@@ -93,12 +93,77 @@ MM.dashboardScreen = {
       </div>`;
     }
 
+    function buildMonthDonut(){
+      var income = Number(m.entradas || 0);
+      var expense = Number(m.saidas || 0);
+      var total = income + expense;
+      if(total <= 0){
+        return `<div class="mm-mobile-flow-empty">Sem movimentos realizados no caixa neste mês.</div>`;
+      }
+      var inPct = Math.round((income / total) * 100);
+      var gradient = `#22c55e 0 ${inPct}%, #7c3aed ${inPct}% 100%`;
+      return `<div class="mm-mobile-flow-shell">
+        <div class="mm-mobile-flow-donut" style="background:conic-gradient(${gradient})">
+          <div class="mm-mobile-flow-hole">
+            <div class="mm-mobile-flow-hole-label">Saldo</div>
+            <div class="mm-mobile-flow-hole-value">${MM.helpers.formatCurrency(m.saldo)}</div>
+          </div>
+        </div>
+        <div class="mm-mobile-flow-legend">
+          <div class="mm-mobile-flow-row"><span class="dot income"></span><span>Entradas</span><strong>${MM.helpers.formatCurrency(income)}</strong></div>
+          <div class="mm-mobile-flow-row"><span class="dot expense"></span><span>Saídas</span><strong>${MM.helpers.formatCurrency(expense)}</strong></div>
+        </div>
+      </div>`;
+    }
+
     var balanceList = buildBalanceList();
     var chartHtml = buildFlowChart();
     var categoryChartHtml = buildUserDonut();
     var heroSubtitle = `Caixa real do mês • ${m.monthCashCount} movimentos realizados • ${m.monthOpenCount} pendentes`;
 
-    var shell = `
+    var shell;
+    if(isMobile){
+      shell = `
+      <section class="dashboard-mobile-clean-shell">
+        <section class="hero-premium-card mobile-clean-hero">
+          <div class="hero-premium-copy">
+            <div class="hero-premium-kicker">Residência financeira</div>
+            <h2>Saldo atual de caixa</h2>
+            <div class="hero-premium-value">${MM.helpers.formatCurrency(m.saldo)}</div>
+            <div class="hero-premium-sub">${heroSubtitle}</div>
+            <div class="hero-premium-badges mobile-clean-badges">
+              <span class="hero-badge good">Entradas ${MM.helpers.formatCurrency(m.entradas)}</span>
+              <span class="hero-badge bad">Saídas ${MM.helpers.formatCurrency(m.saidas)}</span>
+              <span class="hero-badge neutral">Saldo anterior ${MM.helpers.formatCurrency(m.saldoAnterior)}</span>
+            </div>
+          </div>
+          <div class="hero-premium-actions mobile-clean-actions">
+            <button class="btn primary" id="dashboard-new-exit" type="button">Nova saída</button>
+            <button class="btn blue" id="dashboard-new-entry" type="button">Nova entrada</button>
+            <button class="btn secondary" id="dashboard-new-extra" type="button">Despesa extra</button>
+            <button class="btn secondary" id="dashboard-new-entry-extra" type="button">Entrada extra</button>
+          </div>
+        </section>
+
+        <section class="dashboard-v6-metrics mobile-clean-metrics">
+          <article class="dashboard-mini-card"><span>Competência</span><strong>${MM.helpers.formatMonthLabel(MM.state.currentMonth)}</strong></article>
+          <article class="dashboard-mini-card"><span>A vencer</span><strong>${m.dueSoon}</strong></article>
+          <article class="dashboard-mini-card"><span>Atrasadas</span><strong>${m.overdue}</strong></article>
+          <article class="dashboard-mini-card"><span>Realizados</span><strong>${m.monthCashCount}</strong></article>
+        </section>
+
+        <section class="panel section dashboard-v6-panel mobile-flow-panel">
+          <div class="dashboard-v6-head"><div><h3>Fluxo do mês</h3><p>Entradas x saídas</p></div></div>
+          ${buildMonthDonut()}
+        </section>
+
+        <section class="panel section dashboard-v6-panel mobile-balance-panel">
+          <div class="dashboard-v6-head"><div><h3>Saldo por usuário</h3><p>Resumo individual</p></div></div>
+          <div class="item-list compact-balance-list mobile-balance-list">${balanceList}</div>
+        </section>
+      </section>`;
+    } else {
+      shell = `
       <section class="dashboard-v6-shell">
         <section class="hero-premium-card">
           <div class="hero-premium-copy">
@@ -154,7 +219,7 @@ MM.dashboardScreen = {
           </section>
         </section>
       </section>`;
-
+    }
     MM.ui.setHTML('screen-container', shell);
 
     var entryBtn = document.getElementById('dashboard-new-entry');
