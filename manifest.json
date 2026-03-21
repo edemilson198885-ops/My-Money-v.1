@@ -1,17 +1,9 @@
 {
-  "name": "My Money",
-  "short_name": "My Money",
+  "name": "Residência Financeira",
+  "short_name": "Residência",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#111827",
-  "lang": "pt-BR",
-  "icons": [
-    {
-      "src": "./assets/img/logo-home-money.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ]
+  "background_color": "#f5f1ff",
+  "theme_color": "#6f2cff",
+  "lang": "pt-BR"
 }

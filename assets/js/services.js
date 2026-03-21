@@ -59,25 +59,14 @@ MM.services = {
   isMovementRealizedInMonth: function(m, month){
     return this.getMovementCashMonth(m) === month;
   },
-  getCashMovementsForMonth: function(month){
-    return MM.state.movements.filter(function(m){
-      return MM.services.isMovementRealizedInMonth(m, month);
-    });
-  },
-  buildCategoryBreakdown: function(movements){
-    var totals = {};
-    movements.filter(function(m){ return m.type === 'saida'; }).forEach(function(m){
-      var key = String(m.category || '').trim() || 'Sem categoria';
-      totals[key] = (totals[key] || 0) + Number(m.amount || 0);
-    });
-    return Object.keys(totals).map(function(name){
-      return { name: name, total: totals[name] };
-    }).sort(function(a,b){ return b.total - a.total; });
-  },
   getDashboardMetrics: function(){
     var month = MM.state.currentMonth;
     var competenceEntries = this.getMonthMovements();
-    var realizedEntries = this.getCashMovementsForMonth(month);
+    var today = new Date().toISOString().slice(0,10);
+
+    var realizedEntries = MM.state.movements.filter(function(m){
+      return MM.services.isMovementRealizedInMonth(m, month);
+    });
 
     var entradas = realizedEntries.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
     var saidas = realizedEntries.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
@@ -89,6 +78,8 @@ MM.services = {
       if(!cashDate || cashDate.slice(0,7) >= month) return sum;
       return sum + (m.type === 'entrada' ? Number(m.amount||0) : -Number(m.amount||0));
     }, 0);
+
+    var saldoAcumulado = saldoAnterior + (entradas - saidas);
 
     var byUserIncome = MM.state.users.map(function(u){
       return { user:u, total: realizedEntries.filter(function(m){ return m.type === 'entrada' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
@@ -103,10 +94,12 @@ MM.services = {
       var expenseTotal = expense ? Number(expense.total || 0) : 0;
       return { user:u, total: incomeTotal - expenseTotal, income: incomeTotal, expense: expenseTotal };
     });
+    var byCategory = {};
+    realizedEntries.filter(function(m){ return m.type === 'saida'; }).forEach(function(m){ var key = String(m.category || '').trim() || 'Sem categoria'; byCategory[key] = (byCategory[key] || 0) + Number(m.amount || 0); });
 
     var cashMonths = Array.from(new Set(MM.state.movements.map(function(m){ return MM.services.getMovementCashMonth(m); }).filter(Boolean))).sort();
     var monthlyFlow = cashMonths.slice(-6).map(function(mon){
-      var ms = MM.services.getCashMovementsForMonth(mon);
+      var ms = MM.state.movements.filter(function(item){ return MM.services.isMovementRealizedInMonth(item, mon); });
       var totalEntradas = ms.filter(function(item){ return item.type === 'entrada'; }).reduce(function(sum,item){ return sum + Number(item.amount || 0); }, 0);
       var totalSaidas = ms.filter(function(item){ return item.type === 'saida'; }).reduce(function(sum,item){ return sum + Number(item.amount || 0); }, 0);
       return {
@@ -123,16 +116,15 @@ MM.services = {
       saidas: saidas,
       saldoAnterior: saldoAnterior,
       saldo: saldoAnterior + (entradas - saidas),
+      saldoAcumulado: saldoAcumulado,
       count: competenceEntries.length,
       byUserIncome: byUserIncome,
       byUserExpense: byUserExpense,
       byUserBalance: byUserBalance,
-      byCategory: this.buildCategoryBreakdown(realizedEntries).slice(0,5),
+      byCategory: byCategory,
       overdue: overdue,
       dueSoon: dueSoon,
-      monthlyFlow: monthlyFlow,
-      monthCashCount: realizedEntries.length,
-      monthOpenCount: competenceEntries.filter(function(m){ return !MM.services.getMovementCashDate(m); }).length
+      monthlyFlow: monthlyFlow
     };
   },
   filterMovements: function(filters){
