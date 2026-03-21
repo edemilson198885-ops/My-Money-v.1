@@ -199,18 +199,36 @@ MM.services = {
     return created;
   },
   calculateMonthlySummary: function(month){
-    var prevMonth = MM.helpers.previousMonth(month);
-    var prevMov = MM.state.movements.filter(function(m){ return m.competence === prevMonth; });
-    var prevEnt = prevMov.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + m.amount; }, 0);
-    var prevSai = prevMov.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + m.amount; }, 0);
-    var saldoAnterior = prevEnt - prevSai;
     var curMov = MM.state.movements.filter(function(m){ return m.competence === month; });
-    var curEnt = curMov.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + m.amount; }, 0);
-    var curSai = curMov.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + m.amount; }, 0);
-    var saldoMes = curEnt - curSai;
-    var months = Array.from(new Set(MM.state.movements.map(function(m){ return m.competence; }))).sort();
-    var saldoAcumulado = 0;
-    months.forEach(function(mon){ if(mon <= month){ var ms = MM.state.movements.filter(function(m){ return m.competence === mon; }); var e = ms.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + m.amount; }, 0); var s = ms.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + m.amount; }, 0); saldoAcumulado += (e - s); } });
-    return { competence: month, saldoAnterior: saldoAnterior, entradas: curEnt, saidas: curSai, saldoMes: saldoMes, saldoAcumulado: saldoAcumulado, vencer: curMov.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length, atrasadas: curMov.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'atrasado'; }).length };
+
+    var saldoAnterior = MM.state.movements.reduce(function(sum, m){
+      var cashDate = MM.services.getMovementCashDate(m);
+      if(!cashDate || cashDate.slice(0,7) >= month) return sum;
+      return sum + (m.type === 'entrada' ? Number(m.amount || 0) : -Number(m.amount || 0));
+    }, 0);
+
+    var realizedInMonth = MM.state.movements.filter(function(m){
+      return MM.services.isMovementRealizedInMonth(m, month);
+    });
+
+    var curEnt = realizedInMonth
+      .filter(function(m){ return m.type === 'entrada'; })
+      .reduce(function(sum,m){ return sum + Number(m.amount || 0); }, 0);
+
+    var curSai = realizedInMonth
+      .filter(function(m){ return m.type === 'saida'; })
+      .reduce(function(sum,m){ return sum + Number(m.amount || 0); }, 0);
+
+    var saldoMes = saldoAnterior + curEnt - curSai;
+
+    return {
+      competence: month,
+      saldoAnterior: saldoAnterior,
+      entradas: curEnt,
+      saidas: curSai,
+      saldoMes: saldoMes,
+      vencer: curMov.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length,
+      atrasadas: curMov.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'atrasado'; }).length
+    };
   }
 };

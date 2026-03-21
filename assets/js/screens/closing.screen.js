@@ -9,8 +9,7 @@ MM.closingScreen = {
           <div class="panel metric"><div class="muted">Saldo anterior</div><div class="value">${MM.helpers.formatCurrency(s.saldoAnterior)}</div></div>
           <div class="panel metric"><div class="muted">Entradas</div><div class="value">${MM.helpers.formatCurrency(s.entradas)}</div></div>
           <div class="panel metric"><div class="muted">Saídas</div><div class="value">${MM.helpers.formatCurrency(s.saidas)}</div></div>
-          <div class="panel metric"><div class="muted">Saldo do mês</div><div class="value">${MM.helpers.formatCurrency(s.saldoMes)}</div></div>
-          <div class="panel metric"><div class="muted">Saldo acumulado</div><div class="value">${MM.helpers.formatCurrency(s.saldoAcumulado)}</div></div>
+          <div class="panel metric"><div class="muted">Saldo atual</div><div class="value">${MM.helpers.formatCurrency(s.saldoMes)}</div></div>
           <div class="panel metric"><div class="muted">A vencer</div><div class="value">${s.vencer}</div></div>
           <div class="panel metric"><div class="muted">Atrasadas</div><div class="value">${s.atrasadas}</div></div>
         </div>
