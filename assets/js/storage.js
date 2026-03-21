@@ -289,6 +289,7 @@ MM.storage = {
   },
 
   resetLocalData: async function() {
+    try { localStorage.removeItem('mm_active_user_id'); } catch(e) {}
     try { await MM.auth.signOut(); } catch (e) {}
   },
 

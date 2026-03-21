@@ -14,8 +14,9 @@ MM.state = {
     lastCloudSyncAt:null,
     overdueAlertDismissed:false
   },
+  activeUserId:null,
   editingMovementId:null,
-  movementFilters:{ type:'todos', belongsTo:'todos', status:'todos', text:'' }
+  movementFilters:{ type:'todos', belongsTo:'todos', status:'todos', text:'', scope:'active' }
 };
 MM.stateApi = {
   initialize: function(){
@@ -27,8 +28,9 @@ MM.stateApi = {
     MM.state.currentMonth=MM.helpers.currentMonth();
     MM.state.currentView='general';
     MM.state.ui={ lastSavedAt:null, syncStatus:(navigator.onLine ? 'online' : 'offline'), syncMessage:(navigator.onLine ? 'Online' : 'Offline'), lastCloudSyncAt:null, overdueAlertDismissed:false };
+    MM.state.activeUserId = null;
     MM.state.editingMovementId=null;
-    MM.state.movementFilters={ type:'todos', belongsTo:'todos', status:'todos', text:'' };
+    MM.state.movementFilters={ type:'todos', belongsTo:'todos', status:'todos', text:'', scope:'active' };
   },
   set: function(patch){ Object.assign(MM.state, patch); }
 };

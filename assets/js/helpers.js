@@ -19,4 +19,7 @@ MM.helpers = {
   allExitCategories: function(){ var groups = MM.config.EXIT_CATEGORIES; return Object.keys(groups).reduce(function(acc,key){ return acc.concat(groups[key]); }, []); },
   userName: function(id){ if(id === 'shared') return 'Compartilhado'; var user = MM.state.users.find(function(u){ return u.id === id; }); return user ? user.name : '-'; },
   daysInMonth: function(year, month){ return new Date(year, month, 0).getDate(); }
+  ,activeUser: function(){ return MM.state.users.find(function(u){ return u.id === MM.state.activeUserId && !u.inactive; }) || null; },
+  activeUserName: function(){ var u = this.activeUser(); return u ? u.name : 'Não selecionado'; }
+
 };

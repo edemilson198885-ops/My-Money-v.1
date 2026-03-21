@@ -95,6 +95,7 @@ MM.ui = {
     var syncStatus = MM.state.ui.syncStatus || (navigator.onLine ? 'online' : 'offline');
     var syncMessage = MM.state.ui.syncMessage || (navigator.onLine ? 'Online' : 'Offline');
     var cloudTime = MM.state.ui.lastCloudSyncAt ? new Date(MM.state.ui.lastCloudSyncAt).toLocaleTimeString('pt-BR') : 'sem sync';
+    var activeUser = MM.services.ensureActiveUser();
     this.setHTML('topbar', `
       <div class="panel section topbar-v6">
         <div class="topbar-v6-main">
@@ -104,6 +105,7 @@ MM.ui = {
               <div class="topbar-app-name-v6">My Money</div>
               <div class="topbar-brand-title-v6">${house}</div>
               <div class="topbar-meta-line">Competência ${MM.helpers.formatMonthLabel(MM.state.currentMonth)}</div>
+              <div class="topbar-active-user">👤 ${activeUser ? activeUser.name : 'Selecione usuário'}</div>
             </div>
           </div>
           <div class="topbar-actions-v6">
@@ -111,6 +113,7 @@ MM.ui = {
             <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
             <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
             <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
+            <button class="btn secondary" id="topbar-change-user-btn" type="button">Trocar usuário</button>
             <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
           </div>
         </div>
@@ -142,6 +145,7 @@ MM.ui = {
         MM.ui.showToast(err.message || 'Erro ao baixar da nuvem.', 'error');
       }
     };
+    document.getElementById('topbar-change-user-btn').onclick = function(){ MM.ui.openActiveUserSelector(); };
     document.getElementById('topbar-signout-btn').onclick = async function(){
       if(!confirm('Deseja sair desta conta agora?')) return;
       await MM.storage.resetLocalData();
@@ -162,6 +166,59 @@ MM.ui = {
       var base = MM.state.ui.syncMessage || 'Offline';
       messageEl.textContent = MM.state.ui.lastCloudSyncAt ? (base + ' · ' + new Date(MM.state.ui.lastCloudSyncAt).toLocaleTimeString('pt-BR')) : base;
     }
+  },
+
+
+  openActiveUserSelector: function(){
+    var users = (MM.state.users || []).filter(function(u){ return !u.inactive; });
+    if(!users.length) return;
+    var existing = document.getElementById('active-user-modal');
+    if(existing) existing.parentNode.removeChild(existing);
+    var active = MM.services.ensureActiveUser();
+    var overlay = document.createElement('div');
+    overlay.id = 'active-user-modal';
+    overlay.className = 'active-user-modal-backdrop';
+    overlay.innerHTML = '<div class="active-user-modal-card"><div class="active-user-modal-title">Quem está usando agora?</div><div class="active-user-modal-subtitle">Os lançamentos novos serão atribuídos ao usuário escolhido.</div><div class="active-user-modal-list"></div><button class="btn secondary active-user-close-btn" type="button">Fechar</button></div>';
+    var list = overlay.querySelector('.active-user-modal-list');
+    users.forEach(function(user){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'active-user-option ' + (active && active.id === user.id ? 'is-active' : '');
+      btn.innerHTML = '<span class="active-user-option-name">' + user.name + '</span><span class="active-user-option-check">' + ((active && active.id === user.id) ? 'Ativo' : 'Selecionar') + '</span>';
+      btn.onclick = function(){
+        MM.services.setActiveUser(user.id);
+        MM.state.movementFilters = { type:'todos', belongsTo:user.id, status:'todos', text:'', scope:'active' };
+        MM.state.ui.overdueAlertDismissed = false;
+        MM.ui.dismissOverdueAlert();
+        MM.ui.closeActiveUserSelector();
+        MM.ui.showToast('Usuário ativo: ' + user.name, 'info');
+        MM.app.render();
+        MM.ui.scheduleOverdueAlertCheck(5000);
+      };
+      list.appendChild(btn);
+    });
+    overlay.querySelector('.active-user-close-btn').onclick = function(){ MM.ui.closeActiveUserSelector(); };
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) MM.ui.closeActiveUserSelector(); });
+    document.body.appendChild(overlay);
+  },
+  closeActiveUserSelector: function(){
+    var modal = document.getElementById('active-user-modal');
+    if(modal && modal.parentNode) modal.parentNode.removeChild(modal);
+  },
+  promptActiveUserIfNeeded: function(){
+    if(!MM.state.household) return;
+    var users = (MM.state.users || []).filter(function(u){ return !u.inactive; });
+    if(!users.length) return;
+    var active = MM.services.ensureActiveUser();
+    if(active) return;
+    if(users.length === 1){
+      MM.services.setActiveUser(users[0].id);
+      MM.state.movementFilters = { type:'todos', belongsTo:users[0].id, status:'todos', text:'', scope:'active' };
+      MM.app.render();
+      MM.ui.scheduleOverdueAlertCheck(5000);
+      return;
+    }
+    this.openActiveUserSelector();
   },
 
   renderBottomNav: function(){
@@ -205,11 +262,22 @@ MM.ui = {
   closeSidebar: function(){ document.body.classList.remove('sidebar-open'); },
   toggleSidebar: function(){ document.body.classList.toggle('sidebar-open'); },
 
+
+  scheduleOverdueAlertCheck: function(delay){
+    clearTimeout(MM.ui._overdueTimer);
+    MM.ui._overdueTimer = setTimeout(function(){
+      MM.state.ui.overdueAlertDismissed = false;
+      MM.ui.maybeShowOverdueAlert();
+    }, typeof delay === 'number' ? delay : 5000);
+  },
+
   hasOverdueMovements: function(){
     if(!MM.state.household) return false;
+    var activeUser = MM.services.getActiveUser();
+    if(!activeUser) return false;
     var month = MM.state.currentMonth;
     return (MM.state.movements || []).some(function(m){
-      return m && m.type === 'saida' && m.competence === month && MM.services.calculateStatus(m) === 'atrasado';
+      return m && m.type === 'saida' && m.belongsTo === activeUser.id && m.competence === month && MM.services.calculateStatus(m) === 'atrasado';
     });
   },
 
@@ -252,8 +320,10 @@ MM.ui = {
 
   showOverdueAlert: function(){
     if(document.getElementById('overdue-alert-card')) return;
+    var activeUser = MM.services.getActiveUser();
+    if(!activeUser) return;
     var count = (MM.state.movements || []).filter(function(m){
-      return m && m.type === 'saida' && m.competence === MM.state.currentMonth && MM.services.calculateStatus(m) === 'atrasado';
+      return m && m.type === 'saida' && m.belongsTo === activeUser.id && m.competence === MM.state.currentMonth && MM.services.calculateStatus(m) === 'atrasado';
     }).length;
     if(!count) return;
 
@@ -278,7 +348,8 @@ MM.ui = {
 
     card.querySelector('.overdue-alert-pay').onclick = function(){
       MM.state.ui.overdueAlertDismissed = true;
-      MM.state.movementFilters = { type:'saida', belongsTo:'todos', status:'atrasado', text:'' };
+      var activeUser = MM.services.getActiveUser();
+      MM.state.movementFilters = { type:'saida', belongsTo:(activeUser ? activeUser.id : 'todos'), status:'atrasado', text:'' };
       MM.router.goTo(MM.config.SCREENS.MOVEMENTS);
       MM.ui.dismissOverdueAlert();
       MM.ui.showToast('Abrindo movimentações com contas atrasadas.', 'info');
@@ -292,6 +363,7 @@ MM.ui = {
   maybeShowOverdueAlert: function(){
     if(!MM.state.household) return;
     if(MM.state.currentScreen === MM.config.SCREENS.SETUP) return;
+    if(!MM.services.getActiveUser()) return;
     if(MM.state.ui.overdueAlertDismissed) return;
     if(!this.hasOverdueMovements()) return;
     this.showOverdueAlert();

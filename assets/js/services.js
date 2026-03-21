@@ -32,6 +32,37 @@ MM.services = {
     if(includeShared) users.unshift({ value:'shared', label:'Compartilhado' });
     return users;
   },
+  getActiveUser: function(){
+    return MM.state.users.find(function(u){ return u.id === MM.state.activeUserId && !u.inactive; }) || null;
+  },
+  setActiveUser: function(userId){
+    var user = MM.state.users.find(function(u){ return u.id === userId && !u.inactive; });
+    if(!user) return false;
+    MM.state.activeUserId = user.id;
+    try { localStorage.setItem('mm_active_user_id', user.id); } catch(e) {}
+    return true;
+  },
+  clearActiveUser: function(){
+    MM.state.activeUserId = null;
+    try { localStorage.removeItem('mm_active_user_id'); } catch(e) {}
+  },
+  loadActiveUser: function(){
+    var activeUsers = MM.state.users.filter(function(u){ return !u.inactive; });
+    var saved = '';
+    try { saved = localStorage.getItem('mm_active_user_id') || ''; } catch(e) {}
+    if(saved && this.setActiveUser(saved)) return this.getActiveUser();
+    if(activeUsers.length === 1){
+      this.setActiveUser(activeUsers[0].id);
+      return this.getActiveUser();
+    }
+    this.clearActiveUser();
+    return null;
+  },
+  ensureActiveUser: function(){
+    var active = this.getActiveUser();
+    if(active) return active;
+    return this.loadActiveUser();
+  },
   calculateStatus: function(m){
     var today = new Date().toISOString().slice(0,10);
     if(m.type === 'entrada'){

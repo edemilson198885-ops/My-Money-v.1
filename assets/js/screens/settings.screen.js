@@ -42,6 +42,8 @@ MM.settingsScreen = {
 
             <div class="panel section settings-section">
               <h3 style="margin-top:0">Sistema</h3>
+          <div class="field"><label>Usuário ativo</label><div class="active-user-field">👤 ${MM.helpers.activeUserName()}</div></div>
+          <div class="row" style="margin-bottom:12px"><button class="btn secondary" id="settings-change-user-btn" type="button">Trocar usuário ativo</button></div>
               <div class="actions-inline">
                 <button class="btn secondary" id="settings-refresh-btn" type="button">Baixar da nuvem</button>
                 <button class="btn primary" id="settings-sync-btn" type="button">Sincronizar agora</button>
@@ -138,6 +140,9 @@ MM.settingsScreen = {
       });
       e.target.value = '';
     };
+
+    var changeBtn = document.getElementById('settings-change-user-btn');
+    if(changeBtn) changeBtn.onclick = function(){ MM.ui.openActiveUserSelector(); };
 
     document.getElementById('reset-local-btn').onclick = async function(){
       if(!confirm('Tem certeza que deseja sair da conta neste dispositivo?')) return;

@@ -11,6 +11,7 @@ MM.app = {
         MM.state.templates = data.templates || [];
         MM.state.ui = Object.assign({}, MM.state.ui, data.ui || {});
         MM.state.currentScreen = MM.config.SCREENS.DASHBOARD;
+        MM.services.loadActiveUser();
       } else {
         MM.state.currentScreen = MM.config.SCREENS.SETUP;
       }
@@ -44,6 +45,7 @@ MM.app = {
     MM.router.renderCurrent();
     MM.ui.animateScreen();
     MM.ui.renderCloudStatusOnly();
+    setTimeout(function(){ MM.ui.promptActiveUserIfNeeded(); }, 40);
     setTimeout(function(){ MM.ui.maybeShowOverdueAlert(); }, 80);
   },
 
@@ -73,6 +75,7 @@ MM.app = {
       console.error('Auth listener error:', e);
     }
 
+    MM.services.loadActiveUser();
     this.render();
   }
 };

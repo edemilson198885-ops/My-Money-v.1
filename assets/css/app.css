@@ -1544,3 +1544,29 @@ body{
   .mm-bottom-item{min-height:50px!important}
   .mm-bottom-text{font-size:.76rem!important}
 }
+
+
+/* === Usuário ativo === */
+.topbar-active-user{margin-top:4px;font-size:12px;font-weight:700;color:#5b3db6;display:inline-flex;align-items:center;gap:6px}
+.active-user-field{display:flex;align-items:center;min-height:44px;padding:10px 12px;border-radius:12px;background:rgba(111,44,255,.08);border:1px solid rgba(111,44,255,.16);color:#35225c;font-weight:700}
+.active-user-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px}
+.active-user-modal-card{width:min(360px,100%);background:#fff;border-radius:18px;padding:18px;box-shadow:0 22px 60px rgba(15,23,42,.24)}
+.active-user-modal-title{font-size:18px;font-weight:800;color:#26184b;margin-bottom:6px}
+.active-user-modal-subtitle{font-size:13px;line-height:1.45;color:#6f628e;margin-bottom:14px}
+.active-user-modal-list{display:grid;gap:10px;margin-bottom:12px}
+.active-user-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(111,44,255,.12);background:#f8f5ff;color:#2c1f4e;font-weight:700}
+.active-user-option.is-active{border-color:#6f2cff;background:rgba(111,44,255,.1)}
+.active-user-option-check{font-size:12px;color:#6f2cff}
+@media (max-width: 640px){
+  .topbar-active-user{font-size:11px}
+  .active-user-modal-card{padding:16px;border-radius:16px}
+  .active-user-option{padding:11px 12px}
+}
+
+
+/* active user movements scope */
+.toolbar-scope{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px 0;}
+.movement-scope-btn{padding:8px 12px !important;min-height:unset !important;}
+.movement-scope-btn.is-active{background:rgba(111,44,255,.12) !important;border-color:rgba(111,44,255,.32) !important;color:#6f2cff !important;}
+.movement-scope-label{font-size:12px;opacity:.7;}
+@media (max-width: 480px){.toolbar-scope{gap:6px}.movement-scope-label{width:100%}}

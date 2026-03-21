@@ -1,9 +1,15 @@
 window.MM = window.MM || {};
 MM.movementsScreen = {
   render: function(){
-    var userOptions = MM.services.getUserOptions(true);
+    var activeUser = MM.services.getActiveUser();
+    var userOptions = MM.services.getUserOptions(false);
     var belongsOptions = [{ value:'todos', label:'Todos' }].concat(userOptions);
-    var preset = MM.state.movementFilters || { type:'todos', belongsTo:'todos', status:'todos', text:'' };
+    var preset = Object.assign({ type:'todos', belongsTo:'todos', status:'todos', text:'', scope:'active' }, MM.state.movementFilters || {});
+    if(activeUser && (!preset.scope || preset.scope === 'active')){
+      preset.belongsTo = activeUser.id;
+      preset.scope = 'active';
+      MM.state.movementFilters = preset;
+    }
 
     MM.ui.setHTML('screen-container', `
       <section class="panel section">
@@ -12,6 +18,12 @@ MM.movementsScreen = {
             <h2 style="margin:0">Movimentações</h2>
             <div class="muted">Lista recolhida do mês atual. Clique em um lançamento para ver detalhes e ações.</div>
           </div>
+        </div>
+
+        <div class="toolbar-scope">
+          <button class="btn secondary movement-scope-btn ${preset.scope==='active'?'is-active':''}" id="scope-active-btn" type="button">Meu usuário</button>
+          <button class="btn secondary movement-scope-btn ${preset.scope==='all'?'is-active':''}" id="scope-all-btn" type="button">Todos</button>
+          ${activeUser ? `<span class="movement-scope-label">Ativo: ${activeUser.name}</span>` : ''}
         </div>
 
         <div class="toolbar">
@@ -194,11 +206,13 @@ MM.movementsScreen = {
     }
 
     function renderRows(){
+      var selectedBelongs = document.getElementById('filter-belongs').value;
       var filters = {
         type: document.getElementById('filter-type').value,
-        belongsTo: document.getElementById('filter-belongs').value,
+        belongsTo: selectedBelongs,
         status: document.getElementById('filter-status').value,
-        text: document.getElementById('filter-text').value
+        text: document.getElementById('filter-text').value,
+        scope: (selectedBelongs === 'todos' ? 'all' : ((activeUser && selectedBelongs === activeUser.id) ? 'active' : 'custom'))
       };
       MM.state.movementFilters = filters;
       var list = MM.services.filterMovements(filters);
@@ -242,8 +256,19 @@ MM.movementsScreen = {
     }
 
     document.getElementById('apply-filters-btn').onclick = renderRows;
+    document.getElementById('scope-active-btn').onclick = function(){
+      if(!activeUser) return;
+      document.getElementById('filter-belongs').value = activeUser.id;
+      MM.state.movementFilters.scope = 'active';
+      renderRows();
+    };
+    document.getElementById('scope-all-btn').onclick = function(){
+      document.getElementById('filter-belongs').value = 'todos';
+      MM.state.movementFilters.scope = 'all';
+      renderRows();
+    };
     document.getElementById('clear-filters-btn').onclick = function(){
-      MM.state.movementFilters = { type:'todos', belongsTo:'todos', status:'todos', text:'' };
+      MM.state.movementFilters = { type:'todos', belongsTo:(activeUser ? activeUser.id : 'todos'), status:'todos', text:'', scope:(activeUser ? 'active' : 'all') };
       MM.state.expandedMovementId = null;
       MM.router.goTo(MM.config.SCREENS.MOVEMENTS);
     };
