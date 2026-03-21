@@ -97,27 +97,23 @@ MM.ui = {
     var cloudTime = MM.state.ui.lastCloudSyncAt ? new Date(MM.state.ui.lastCloudSyncAt).toLocaleTimeString('pt-BR') : 'sem sync';
     var activeUser = MM.services.ensureActiveUser();
     this.setHTML('topbar', `
-      <div class="panel section topbar-v6">
-        <div class="topbar-v6-main">
-          <div class="topbar-brand-v6">
+      <div class="panel section topbar-v6 topbar-v6-clean">
+        <div class="topbar-v6-main topbar-v6-main-clean">
+          <div class="topbar-brand-v6 topbar-brand-v6-clean">
             <img src="./assets/img/logo-home-money.png" alt="Logo do app" class="topbar-logo" />
             <div class="topbar-brand-copy-v6">
               <div class="topbar-app-name-v6">My Money</div>
               <div class="topbar-brand-title-v6">${house}</div>
               <div class="topbar-meta-line">Competência ${MM.helpers.formatMonthLabel(MM.state.currentMonth)}</div>
-              <div class="topbar-active-user">👤 ${activeUser ? activeUser.name : 'Selecione usuário'}</div>
+              <button class="topbar-active-user topbar-active-user-btn" id="topbar-active-user-btn" type="button">👤 ${activeUser ? activeUser.name : 'Selecione usuário'}</button>
             </div>
           </div>
-          <div class="topbar-actions-v6">
+          <div class="topbar-actions-v6 topbar-actions-v6-clean">
             <input id="global-month" type="month" value="${MM.state.currentMonth}" class="topbar-month-input" />
             <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
-            <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
-            <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
-            <button class="btn secondary" id="topbar-change-user-btn" type="button">Trocar usuário</button>
-            <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
           </div>
         </div>
-        <div class="topbar-v6-meta">
+        <div class="topbar-v6-meta topbar-v6-meta-clean">
           <div id="cloud-sync-message" class="topbar-saved-text">${syncMessage} · ${cloudTime}</div>
           <div class="topbar-saved-text">Último salvamento ${saved}</div>
         </div>
@@ -127,32 +123,7 @@ MM.ui = {
       MM.state.currentMonth = e.target.value || MM.helpers.currentMonth();
       MM.app.render();
     };
-    document.getElementById('cloud-sync-btn').onclick = async function(){
-      try {
-        await MM.sync.syncNow();
-        MM.ui.showToast('Dados enviados para a nuvem.', 'info');
-        MM.app.render();
-      } catch(err) {
-        MM.ui.showToast(err.message || 'Erro ao sincronizar.', 'error');
-      }
-    };
-    document.getElementById('cloud-refresh-btn').onclick = async function(){
-      try {
-        await MM.sync.refreshFromCloud();
-        MM.ui.showToast('Dados atualizados da nuvem.', 'info');
-        MM.app.render();
-      } catch(err) {
-        MM.ui.showToast(err.message || 'Erro ao baixar da nuvem.', 'error');
-      }
-    };
-    document.getElementById('topbar-change-user-btn').onclick = function(){ MM.ui.openActiveUserSelector(); };
-    document.getElementById('topbar-signout-btn').onclick = async function(){
-      if(!confirm('Deseja sair desta conta agora?')) return;
-      await MM.storage.resetLocalData();
-      MM.stateApi.initialize();
-      MM.setupScreen.resetTemp();
-      MM.app.render();
-    };
+    document.getElementById('topbar-active-user-btn').onclick = function(){ MM.ui.openActiveUserSelector(); };
   },
 
   renderCloudStatusOnly: function(){

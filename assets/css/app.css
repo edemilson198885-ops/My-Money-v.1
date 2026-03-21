@@ -1570,3 +1570,39 @@ body{
 .movement-scope-btn.is-active{background:rgba(111,44,255,.12) !important;border-color:rgba(111,44,255,.32) !important;color:#6f2cff !important;}
 .movement-scope-label{font-size:12px;opacity:.7;}
 @media (max-width: 480px){.toolbar-scope{gap:6px}.movement-scope-label{width:100%}}
+
+
+/* ===== v6.3.3 topbar clean / actions in settings ===== */
+.topbar-v6-clean .topbar-active-user-btn{
+  appearance:none;border:0;background:transparent;padding:0;cursor:pointer;
+}
+.topbar-v6-clean .topbar-active-user-btn:hover{opacity:.92}
+.topbar-v6-clean .topbar-actions-v6-clean{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch;min-width:min(340px,100%)}
+.topbar-v6-clean .topbar-month-input{width:100%}
+.topbar-v6-clean #cloud-sync-status{justify-content:center;text-align:center}
+.topbar-v6-clean .topbar-v6-meta-clean{margin-top:10px}
+
+@media (max-width: 768px){
+  .topbar-v6-clean{padding:12px 12px 10px!important}
+  .topbar-v6-clean .topbar-v6-main-clean{gap:12px!important}
+  .topbar-v6-clean .topbar-brand-v6-clean{align-items:flex-start!important;gap:10px!important}
+  .topbar-v6-clean .topbar-logo{width:52px!important;height:52px!important;border-radius:16px!important}
+  .topbar-v6-clean .topbar-app-name-v6{font-size:.68rem!important;letter-spacing:.2em!important}
+  .topbar-v6-clean .topbar-brand-title-v6{font-size:1.04rem!important;line-height:1.05!important}
+  .topbar-v6-clean .topbar-meta-line{font-size:.84rem!important;margin-top:2px!important}
+  .topbar-v6-clean .topbar-active-user-btn{margin-top:4px!important;font-size:.9rem!important}
+  .topbar-v6-clean .topbar-actions-v6-clean{grid-template-columns:1fr!important;gap:8px!important;width:100%!important;min-width:0!important}
+  .topbar-v6-clean .topbar-month-input{height:52px!important;border-radius:18px!important;font-size:.98rem!important}
+  .topbar-v6-clean #cloud-sync-status{min-height:42px!important;padding:10px 12px!important;border-radius:18px!important;font-size:.95rem!important}
+  .topbar-v6-clean .topbar-saved-text{font-size:.76rem!important;line-height:1.18!important}
+}
+
+@media (max-width: 420px){
+  .topbar-v6-clean{padding:10px 10px 9px!important;border-radius:20px!important}
+  .topbar-v6-clean .topbar-logo{width:48px!important;height:48px!important}
+  .topbar-v6-clean .topbar-brand-title-v6{font-size:1rem!important}
+  .topbar-v6-clean .topbar-meta-line{font-size:.8rem!important}
+  .topbar-v6-clean .topbar-active-user-btn{font-size:.86rem!important}
+  .topbar-v6-clean .topbar-month-input{height:50px!important}
+  .topbar-v6-clean #cloud-sync-status{min-height:40px!important;font-size:.92rem!important}
+}
