@@ -1,0 +1,9 @@
+{
+  "name": "Residência Financeira",
+  "short_name": "Residência",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f1ff",
+  "theme_color": "#6f2cff",
+  "lang": "pt-BR"
+}
