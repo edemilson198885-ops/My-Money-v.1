@@ -3,7 +3,7 @@ MM.closingScreen = {
   render: function(){
     var s = MM.services.calculateMonthlySummary(MM.state.currentMonth);
     MM.ui.setHTML('screen-container', `
-      <section class="panel section closing-summary-panel">
+      <section class="panel section">
         <h2 style="margin-top:0">Fechamento mensal</h2>
         <div class="metric-grid">
           <div class="panel metric"><div class="muted">Saldo anterior</div><div class="value">${MM.helpers.formatCurrency(s.saldoAnterior)}</div></div>
