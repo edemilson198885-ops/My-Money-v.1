@@ -62,10 +62,9 @@ MM.ui = {
     }
     if(sidebar) sidebar.style.display = '';
     this.setHTML('sidebar', `
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-logo-wrap"><img src="./assets/logo-home-rs.png" alt="Residência Financeira" class="sidebar-brand-logo" /></div>
-        <div class="brand-kicker">Residência Financeira <span class="brand-kicker-version">v${MM.config.APP_VERSION}</span></div>
-        <div class="brand-name">Seu controle</div>
+      <div class="sidebar-brand sidebar-brand-v6">
+        <div class="sidebar-logo-wrap"><img src="./assets/img/logo-home-money.png" alt="Logo da residência" class="sidebar-logo-img" /></div>
+        <div class="brand-name brand-name-v6">Residência em ordem</div>
         <div class="brand-version">Saldo, contas e família no mesmo lugar</div>
       </div>
       <nav class="sidebar-nav">
@@ -79,9 +78,7 @@ MM.ui = {
         ${this.navItem(current,'closing','Fechamento mensal','Virada do mês')}
         ${this.navItem(current,'settings','Configurações','Pessoas e regras')}
       </nav>
-      <div class="sidebar-footer">
-        Controle simples, visual limpo e foco total no saldo do mês.
-      </div>
+      <div class="sidebar-footer">Caixa real: pagou ou recebeu, o saldo muda na hora.</div>
     `);
   },
   renderTopbar: function(){
@@ -99,28 +96,27 @@ MM.ui = {
     var syncMessage = MM.state.ui.syncMessage || (navigator.onLine ? 'Online' : 'Offline');
     var cloudTime = MM.state.ui.lastCloudSyncAt ? new Date(MM.state.ui.lastCloudSyncAt).toLocaleTimeString('pt-BR') : 'sem sync';
     this.setHTML('topbar', `
-      <div class="panel section topbar-mobile-compact">
-        <div class="topbar-brand-row">
-          <div class="topbar-brand-mark topbar-brand-mark-logo"><img src="./assets/logo-home-rs.png" alt="Residência Financeira" class="topbar-brand-logo" /></div>
-          <div class="topbar-brand-copy">
-            <div class="topbar-brand-title topbar-brand-title-logo">Residência Financeira</div>
-            <div class="topbar-brand-version">v${MM.config.APP_VERSION}</div>
-          </div>
-          <div class="topbar-house-chip">${house}</div>
-        </div>
-        <div class="topbar-meta-line">Competência ${MM.state.currentMonth}</div>
-        <div class="topbar-controls-row">
-          <input id="global-month" type="month" value="${MM.state.currentMonth}" class="topbar-month-input" />
-          <div class="cloud-sync-wrap">
-            <div class="cloud-sync-row">
-              <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
-              <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
-              <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
-              <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
+      <div class="panel section topbar-v6">
+        <div class="topbar-v6-main">
+          <div class="topbar-brand-v6">
+            <img src="./assets/img/logo-home-money.png" alt="Logo do app" class="topbar-logo" />
+            <div class="topbar-brand-copy-v6">
+              <div class="topbar-app-name-v6">My Money</div>
+              <div class="topbar-brand-title-v6">${house}</div>
+              <div class="topbar-meta-line">Competência ${MM.helpers.formatMonthLabel(MM.state.currentMonth)}</div>
             </div>
-            <div id="cloud-sync-message" class="topbar-saved-text">${syncMessage} · ${cloudTime}</div>
-            <div class="topbar-saved-text">Atualizado ${saved}</div>
           </div>
+          <div class="topbar-actions-v6">
+            <input id="global-month" type="month" value="${MM.state.currentMonth}" class="topbar-month-input" />
+            <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
+            <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
+            <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
+            <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
+          </div>
+        </div>
+        <div class="topbar-v6-meta">
+          <div id="cloud-sync-message" class="topbar-saved-text">${syncMessage} · ${cloudTime}</div>
+          <div class="topbar-saved-text">Último salvamento ${saved}</div>
         </div>
       </div>
     `);
@@ -146,19 +142,13 @@ MM.ui = {
         MM.ui.showToast(err.message || 'Erro ao baixar da nuvem.', 'error');
       }
     };
-    var signOutBtn = document.getElementById('topbar-signout-btn');
-    if(signOutBtn){
-      signOutBtn.onclick = async function(){
-        try {
-          await MM.auth.signOut();
-          MM.stateApi.initialize();
-          MM.app.render();
-          MM.ui.showToast('Sessão encerrada com sucesso.', 'info');
-        } catch(err) {
-          MM.ui.showToast(err.message || 'Erro ao sair da conta.', 'error');
-        }
-      };
-    }
+    document.getElementById('topbar-signout-btn').onclick = async function(){
+      if(!confirm('Deseja sair desta conta agora?')) return;
+      await MM.storage.resetLocalData();
+      MM.stateApi.initialize();
+      MM.setupScreen.resetTemp();
+      MM.app.render();
+    };
   },
 
   renderCloudStatusOnly: function(){
@@ -213,5 +203,98 @@ MM.ui = {
   },
   openSidebar: function(){ document.body.classList.add('sidebar-open'); },
   closeSidebar: function(){ document.body.classList.remove('sidebar-open'); },
-  toggleSidebar: function(){ document.body.classList.toggle('sidebar-open'); }
+  toggleSidebar: function(){ document.body.classList.toggle('sidebar-open'); },
+
+  hasOverdueMovements: function(){
+    if(!MM.state.household) return false;
+    var month = MM.state.currentMonth;
+    return (MM.state.movements || []).some(function(m){
+      return m && m.type === 'saida' && m.competence === month && MM.services.calculateStatus(m) === 'atrasado';
+    });
+  },
+
+  dismissOverdueAlert: function(){
+    MM.state.ui.overdueAlertDismissed = true;
+    var el = document.getElementById('overdue-alert-card');
+    if(el){ el.classList.remove('show'); setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 180); }
+  },
+
+  pulseOverdueAlert: function(card){
+    if(!card) return;
+    card.classList.remove('shake');
+    void card.offsetWidth;
+    card.classList.add('shake');
+    setTimeout(function(){ card.classList.remove('shake'); }, 650);
+    try {
+      if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    } catch(e) {}
+    try {
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if(!AudioCtx) return;
+      var ctx = MM.ui._alertAudioCtx || new AudioCtx();
+      MM.ui._alertAudioCtx = ctx;
+      if (ctx.state === 'suspended' && ctx.resume) {
+        ctx.resume().catch(function(){});
+      }
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } catch(e) {}
+  },
+
+  showOverdueAlert: function(){
+    if(document.getElementById('overdue-alert-card')) return;
+    var count = (MM.state.movements || []).filter(function(m){
+      return m && m.type === 'saida' && m.competence === MM.state.currentMonth && MM.services.calculateStatus(m) === 'atrasado';
+    }).length;
+    if(!count) return;
+
+    var card = document.createElement('div');
+    card.id = 'overdue-alert-card';
+    card.className = 'overdue-alert-card';
+    card.innerHTML = `
+      <div class="overdue-alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3L1 21h22L12 3zm1 14h-2v-2h2v2zm0-4h-2V9h2v4z" fill="currentColor"></path></svg>
+      </div>
+      <div class="overdue-alert-copy">
+        <div class="overdue-alert-title">Atenção crítica</div>
+        <div class="overdue-alert-text">Você possui ${count} conta${count > 1 ? 's' : ''} em atraso para pagar. Deseja regularizar agora?</div>
+      </div>
+      <div class="overdue-alert-actions">
+        <button type="button" class="btn danger overdue-alert-pay">Pagar agora</button>
+        <button type="button" class="btn secondary overdue-alert-ignore">Ignorar</button>
+      </div>
+    `;
+    document.body.appendChild(card);
+    requestAnimationFrame(function(){ card.classList.add('show'); MM.ui.pulseOverdueAlert(card); });
+
+    card.querySelector('.overdue-alert-pay').onclick = function(){
+      MM.state.ui.overdueAlertDismissed = true;
+      MM.state.movementFilters = { type:'saida', belongsTo:'todos', status:'atrasado', text:'' };
+      MM.router.goTo(MM.config.SCREENS.MOVEMENTS);
+      MM.ui.dismissOverdueAlert();
+      MM.ui.showToast('Abrindo movimentações com contas atrasadas.', 'info');
+    };
+
+    card.querySelector('.overdue-alert-ignore').onclick = function(){
+      MM.ui.dismissOverdueAlert();
+    };
+  },
+
+  maybeShowOverdueAlert: function(){
+    if(!MM.state.household) return;
+    if(MM.state.currentScreen === MM.config.SCREENS.SETUP) return;
+    if(MM.state.ui.overdueAlertDismissed) return;
+    if(!this.hasOverdueMovements()) return;
+    this.showOverdueAlert();
+  },
+
 };

@@ -11,7 +11,8 @@ MM.state = {
     lastSavedAt:null,
     syncStatus:'offline',
     syncMessage:'Offline',
-    lastCloudSyncAt:null
+    lastCloudSyncAt:null,
+    overdueAlertDismissed:false
   },
   editingMovementId:null,
   movementFilters:{ type:'todos', belongsTo:'todos', status:'todos', text:'' }
@@ -25,7 +26,7 @@ MM.stateApi = {
     MM.state.currentScreen=MM.config.SCREENS.SETUP;
     MM.state.currentMonth=MM.helpers.currentMonth();
     MM.state.currentView='general';
-    MM.state.ui={ lastSavedAt:null, syncStatus:(navigator.onLine ? 'online' : 'offline'), syncMessage:(navigator.onLine ? 'Online' : 'Offline'), lastCloudSyncAt:null };
+    MM.state.ui={ lastSavedAt:null, syncStatus:(navigator.onLine ? 'online' : 'offline'), syncMessage:(navigator.onLine ? 'Online' : 'Offline'), lastCloudSyncAt:null, overdueAlertDismissed:false };
     MM.state.editingMovementId=null;
     MM.state.movementFilters={ type:'todos', belongsTo:'todos', status:'todos', text:'' };
   },

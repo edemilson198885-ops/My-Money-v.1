@@ -44,6 +44,7 @@ MM.app = {
     MM.router.renderCurrent();
     MM.ui.animateScreen();
     MM.ui.renderCloudStatusOnly();
+    setTimeout(function(){ MM.ui.maybeShowOverdueAlert(); }, 80);
   },
 
   boot: async function() {
