@@ -62,10 +62,9 @@ MM.ui = {
     }
     if(sidebar) sidebar.style.display = '';
     this.setHTML('sidebar', `
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-logo-wrap"><img src="./assets/logo-home-rs.png" alt="Residência Financeira" class="sidebar-brand-logo" /></div>
-        <div class="brand-kicker">Residência Financeira <span class="brand-kicker-version">v${MM.config.APP_VERSION}</span></div>
-        <div class="brand-name">Seu controle</div>
+      <div class="sidebar-brand sidebar-brand-v6">
+        <div class="sidebar-logo-wrap"><img src="./assets/img/logo-home-money.png" alt="Logo da residência" class="sidebar-logo-img" /></div>
+        <div class="brand-name brand-name-v6">Residência em ordem</div>
         <div class="brand-version">Saldo, contas e família no mesmo lugar</div>
       </div>
       <nav class="sidebar-nav">
@@ -79,9 +78,7 @@ MM.ui = {
         ${this.navItem(current,'closing','Fechamento mensal','Virada do mês')}
         ${this.navItem(current,'settings','Configurações','Pessoas e regras')}
       </nav>
-      <div class="sidebar-footer">
-        Controle simples, visual limpo e foco total no saldo do mês.
-      </div>
+      <div class="sidebar-footer">Caixa real: pagou ou recebeu, o saldo muda na hora.</div>
     `);
   },
   renderTopbar: function(){
@@ -99,28 +96,26 @@ MM.ui = {
     var syncMessage = MM.state.ui.syncMessage || (navigator.onLine ? 'Online' : 'Offline');
     var cloudTime = MM.state.ui.lastCloudSyncAt ? new Date(MM.state.ui.lastCloudSyncAt).toLocaleTimeString('pt-BR') : 'sem sync';
     this.setHTML('topbar', `
-      <div class="panel section topbar-mobile-compact">
-        <div class="topbar-brand-row">
-          <div class="topbar-brand-mark topbar-brand-mark-logo"><img src="./assets/logo-home-rs.png" alt="Residência Financeira" class="topbar-brand-logo" /></div>
-          <div class="topbar-brand-copy">
-            <div class="topbar-brand-title topbar-brand-title-logo">Residência Financeira</div>
-            <div class="topbar-brand-version">v${MM.config.APP_VERSION}</div>
-          </div>
-          <div class="topbar-house-chip">${house}</div>
-        </div>
-        <div class="topbar-meta-line">Competência ${MM.state.currentMonth}</div>
-        <div class="topbar-controls-row">
-          <input id="global-month" type="month" value="${MM.state.currentMonth}" class="topbar-month-input" />
-          <div class="cloud-sync-wrap">
-            <div class="cloud-sync-row">
-              <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
-              <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
-              <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
-              <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
+      <div class="panel section topbar-v6">
+        <div class="topbar-v6-main">
+          <div class="topbar-brand-v6">
+            <img src="./assets/img/logo-home-money.png" alt="Logo do app" class="topbar-logo" />
+            <div class="topbar-brand-copy-v6">
+              <div class="topbar-brand-title-v6">${house}</div>
+              <div class="topbar-meta-line">Competência ${MM.helpers.formatMonthLabel(MM.state.currentMonth)}</div>
             </div>
-            <div id="cloud-sync-message" class="topbar-saved-text">${syncMessage} · ${cloudTime}</div>
-            <div class="topbar-saved-text">Atualizado ${saved}</div>
           </div>
+          <div class="topbar-actions-v6">
+            <input id="global-month" type="month" value="${MM.state.currentMonth}" class="topbar-month-input" />
+            <span id="cloud-sync-status" class="sync-pill ${syncStatus}">${syncMessage}</span>
+            <button class="btn secondary" id="cloud-refresh-btn" type="button">Baixar nuvem</button>
+            <button class="btn primary" id="cloud-sync-btn" type="button">Sincronizar</button>
+            <button class="btn danger" id="topbar-signout-btn" type="button">Sair</button>
+          </div>
+        </div>
+        <div class="topbar-v6-meta">
+          <div id="cloud-sync-message" class="topbar-saved-text">${syncMessage} · ${cloudTime}</div>
+          <div class="topbar-saved-text">Último salvamento ${saved}</div>
         </div>
       </div>
     `);
@@ -146,19 +141,13 @@ MM.ui = {
         MM.ui.showToast(err.message || 'Erro ao baixar da nuvem.', 'error');
       }
     };
-    var signOutBtn = document.getElementById('topbar-signout-btn');
-    if(signOutBtn){
-      signOutBtn.onclick = async function(){
-        try {
-          await MM.auth.signOut();
-          MM.stateApi.initialize();
-          MM.app.render();
-          MM.ui.showToast('Sessão encerrada com sucesso.', 'info');
-        } catch(err) {
-          MM.ui.showToast(err.message || 'Erro ao sair da conta.', 'error');
-        }
-      };
-    }
+    document.getElementById('topbar-signout-btn').onclick = async function(){
+      if(!confirm('Deseja sair desta conta agora?')) return;
+      await MM.storage.resetLocalData();
+      MM.stateApi.initialize();
+      MM.setupScreen.resetTemp();
+      MM.app.render();
+    };
   },
 
   renderCloudStatusOnly: function(){
