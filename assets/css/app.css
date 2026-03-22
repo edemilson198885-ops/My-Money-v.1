@@ -1668,3 +1668,92 @@ body{
   #bottom-nav button{font-size:.8rem!important;gap:4px!important;padding:8px 6px!important}
   #bottom-nav button .icon{font-size:1rem!important}
 }
+
+
+/* ===== v6.3.5 mobile dashboard full experience ===== */
+@media (max-width: 768px){
+  .dashboard-mobile-v7{display:grid;gap:12px;padding:0 0 84px}
+  .hero-mobile-v7{padding:14px!important;border-radius:24px!important;background:linear-gradient(135deg,#101a3a 0%,#172554 55%,#28115a 100%);color:#fff;overflow:hidden}
+  .mobile-month-switcher{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px;padding:6px 0 14px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .month-nav-btn{height:44px;width:44px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:1.4rem;font-weight:800}
+  .mobile-month-center{text-align:center;display:grid;gap:2px}
+  .mobile-month-label{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;opacity:.72}
+  .mobile-month-center strong{font-size:1.18rem;line-height:1.1}
+  .mobile-month-center small{font-size:.76rem;opacity:.75}
+  .hero-mobile-v7 .hero-mobile-kicker{font-size:.84rem;color:#c7d2fe;margin-bottom:4px}
+  .hero-mobile-v7 .hero-mobile-value{font-size:2.55rem;line-height:.95;color:#fff}
+  .hero-mobile-v7 .hero-mobile-sub{font-size:.88rem;line-height:1.3;color:rgba(255,255,255,.82)}
+  .hero-mobile-v7 .hero-mobile-main-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .hero-mobile-v7 .hero-mobile-main-actions .btn{height:46px;border-radius:16px}
+
+  .mobile-shortcuts-v7{grid-template-columns:repeat(4,1fr)!important;gap:10px!important}
+  .mobile-metrics-v7{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mobile-metrics-v7 .mobile-metric-card{padding:12px;border-radius:18px;min-height:88px;background:#fff}
+  .mobile-metrics-v7 .mobile-metric-card.metric-main{background:linear-gradient(180deg,#faf7ff 0%,#f1eafe 100%)}
+  .mobile-metrics-v7 .mobile-metric-card span{display:block;font-size:.78rem;color:var(--muted);line-height:1.15}
+  .mobile-metrics-v7 .mobile-metric-card strong{display:block;margin-top:8px;font-size:1.02rem;line-height:1.08}
+
+  .mobile-panel-v7{padding:14px!important;border-radius:24px!important}
+  .mobile-panel-v7 .dashboard-v6-head{margin-bottom:12px}
+  .mobile-panel-v7 .dashboard-v6-head h3{font-size:1.06rem!important;margin:0}
+  .mobile-panel-v7 .dashboard-v6-head p{font-size:.8rem!important;margin-top:2px}
+
+  .month-donut-shell-rich{grid-template-columns:1fr!important;gap:12px!important}
+  .month-donut-shell-rich .month-donut{margin:0 auto;width:118px!important;height:118px!important}
+  .month-donut-shell-rich .month-donut-hole{width:70px!important;height:70px!important}
+  .month-donut-shell-rich .month-donut-hole small{font-size:.68rem!important}
+  .month-donut-shell-rich .month-donut-hole strong{font-size:.92rem!important;line-height:1.08!important}
+  .month-donut-shell-rich .month-donut-legend{display:grid;gap:8px}
+  .month-donut-shell-rich .month-legend-row{padding:11px 12px!important;border-radius:16px!important}
+
+  .mobile-flow-chart-v7{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-height:auto}
+  .mobile-flow-chart-v7 .mm-chart-col-group{min-width:0;background:linear-gradient(180deg,#fbf9ff 0%,#f3edff 100%);border:1px solid #eee6ff;border-radius:18px;padding:12px 8px 10px}
+  .mobile-flow-chart-v7 .mm-chart-bars{height:132px}
+  .mobile-flow-chart-v7 .mm-chart-values{font-size:.7rem;gap:2px;margin-top:8px}
+  .mobile-flow-chart-v7 .mm-chart-label{font-size:.78rem;margin-top:8px}
+
+  .mobile-category-wrap-v7 .category-chart-shell{display:grid;grid-template-columns:1fr;gap:14px}
+  .mobile-category-wrap-v7 .category-donut{width:170px;height:170px;margin:0 auto}
+  .mobile-category-wrap-v7 .category-donut-hole{width:100px;height:100px}
+  .mobile-category-wrap-v7 .category-donut-title{font-size:.8rem}
+  .mobile-category-wrap-v7 .category-donut-value{font-size:1.05rem;line-height:1.1;text-align:center}
+  .mobile-category-wrap-v7 .category-legend{display:grid;gap:8px}
+  .mobile-category-wrap-v7 .category-legend-row{padding:10px 12px;border-radius:15px;background:#f8f4ff}
+  .mobile-category-wrap-v7 .category-legend-left{font-size:.84rem;line-height:1.15;min-width:0}
+  .mobile-category-wrap-v7 .category-legend-left i{flex:0 0 10px;width:10px;height:10px}
+  .mobile-category-wrap-v7 .category-legend-row strong{font-size:.86rem}
+
+  .mobile-balance-list-v7{display:grid;gap:10px}
+  .mobile-balance-list-v7 .balance-user-link{padding:13px 13px 12px!important;border-radius:18px!important;background:#f8f4ff}
+  .mobile-balance-list-v7 .user-balance-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:8px!important;margin-bottom:4px!important}
+  .mobile-balance-list-v7 .user-balance-head strong{font-size:.96rem!important;line-height:1.15!important}
+  .mobile-balance-list-v7 .user-balance-value{font-size:1.02rem!important;line-height:1.08!important;text-align:right}
+  .mobile-balance-list-v7 .user-balance-meta{font-size:.76rem!important;line-height:1.2!important}
+
+  .insight-list-mobile-v7{display:grid;gap:8px}
+  .insight-list-mobile-v7 .insight-row{padding:11px 12px;border-radius:16px;background:#f8f4ff}
+  .insight-list-mobile-v7 .insight-row span{font-size:.82rem}
+  .insight-list-mobile-v7 .insight-row strong{font-size:.92rem;text-align:right}
+}
+
+@media (max-width: 430px){
+  .dashboard-mobile-v7{gap:10px;padding-bottom:82px}
+  .hero-mobile-v7{padding:13px!important;border-radius:22px!important}
+  .mobile-month-switcher{grid-template-columns:40px 1fr 40px;gap:8px;padding-bottom:12px}
+  .month-nav-btn{height:40px;width:40px;border-radius:14px}
+  .mobile-month-center strong{font-size:1.08rem}
+  .mobile-month-center small{font-size:.72rem}
+  .hero-mobile-v7 .hero-mobile-value{font-size:2.28rem}
+  .hero-mobile-v7 .hero-mobile-main-actions{grid-template-columns:1fr}
+  .mobile-shortcuts-v7{gap:8px!important}
+  .mobile-shortcut-btn .icon{width:46px!important;height:46px!important}
+  .mobile-metrics-v7{gap:8px}
+  .mobile-metrics-v7 .mobile-metric-card{padding:11px;min-height:82px}
+  .mobile-panel-v7{padding:12px!important;border-radius:22px!important}
+  .month-donut-shell-rich .month-donut{width:108px!important;height:108px!important}
+  .month-donut-shell-rich .month-donut-hole{width:64px!important;height:64px!important}
+  .mobile-flow-chart-v7 .mm-chart-bars{height:118px}
+  .mobile-flow-chart-v7 .mm-chart-col-group{padding:10px 7px 9px}
+  .mobile-category-wrap-v7 .category-donut{width:154px;height:154px}
+  .mobile-category-wrap-v7 .category-donut-hole{width:92px;height:92px}
+}

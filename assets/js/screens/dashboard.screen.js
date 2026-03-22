@@ -93,18 +93,13 @@ MM.dashboardScreen = {
       </div>`;
     }
 
-    var balanceList = buildBalanceList();
-    var chartHtml = buildFlowChart();
-    var categoryChartHtml = buildUserDonut();
-    var heroSubtitle = `Caixa real do mês • ${m.monthCashCount} movimentos realizados • ${m.monthOpenCount} pendentes`;
-
     function buildMonthDonut(){
       var entradas = Number(m.entradas || 0);
       var saidas = Number(m.saidas || 0);
       var total = Math.max(entradas + saidas, 1);
       var inPct = Math.round((entradas / total) * 100);
       var donut = `conic-gradient(#31d17c 0 ${inPct}%, #7c3aed ${inPct}% 100%)`;
-      return `<div class="month-donut-shell">
+      return `<div class="month-donut-shell month-donut-shell-rich">
         <div class="month-donut" style="background:${donut}">
           <div class="month-donut-hole">
             <small>Saldo</small>
@@ -118,42 +113,82 @@ MM.dashboardScreen = {
       </div>`;
     }
 
+    var balanceList = buildBalanceList();
+    var chartHtml = buildFlowChart();
+    var categoryChartHtml = buildUserDonut();
+    var heroSubtitle = `Caixa real do mês • ${m.monthCashCount} movimentos realizados • ${m.monthOpenCount} pendentes`;
+    var insightHtml = `
+      <div class="insight-list insight-list-mobile-v7">
+        <div class="insight-row"><span>Saldo do caixa</span><strong>${MM.helpers.formatCurrency(m.saldo)}</strong></div>
+        <div class="insight-row"><span>Já realizado</span><strong>${m.monthCashCount}</strong></div>
+        <div class="insight-row"><span>Ainda pendente</span><strong>${m.monthOpenCount}</strong></div>
+        <div class="insight-row"><span>Maior foco</span><strong>${m.byCategory && m.byCategory[0] ? m.byCategory[0].name : 'Sem categoria'}</strong></div>
+      </div>`;
+
     var shell = '';
     if (isMobile) {
       shell = `
-        <section class="dashboard-mobile-clean">
-          <section class="hero-mobile-clean">
+        <section class="dashboard-mobile-v7" id="dashboard-mobile-v7">
+          <section class="hero-mobile-v7 panel section">
+            <div class="mobile-month-switcher" id="mobile-month-switcher">
+              <button class="month-nav-btn" id="mobile-month-prev" type="button" aria-label="Competência anterior">‹</button>
+              <div class="mobile-month-center">
+                <div class="mobile-month-label">Competência</div>
+                <strong>${MM.helpers.formatMonthLabel(MM.state.currentMonth)}</strong>
+                <small>Arraste para os lados para trocar</small>
+              </div>
+              <button class="month-nav-btn" id="mobile-month-next" type="button" aria-label="Próxima competência">›</button>
+            </div>
+
             <div class="hero-mobile-kicker">Saldo do mês</div>
             <div class="hero-mobile-value">${MM.helpers.formatCurrency(m.saldo)}</div>
-            <div class="hero-mobile-sub">Entradas ${MM.helpers.formatCurrency(m.entradas)} • Saídas ${MM.helpers.formatCurrency(m.saidas)}</div>
+            <div class="hero-mobile-sub">${heroSubtitle}</div>
+
             <div class="hero-mobile-main-actions">
               <button class="btn primary" id="dashboard-new-entry" type="button">＋ Entrada</button>
               <button class="btn secondary" id="dashboard-new-exit" type="button">－ Saída</button>
             </div>
           </section>
 
-          <section class="mobile-shortcuts-clean">
+          <section class="mobile-shortcuts-clean mobile-shortcuts-v7">
             <button class="mobile-shortcut-btn" data-target="entry-extra" type="button"><span class="icon">＋</span><span>Entrada+</span></button>
             <button class="mobile-shortcut-btn" data-target="extra" type="button"><span class="icon">－</span><span>Despesa</span></button>
             <button class="mobile-shortcut-btn" data-target="templates" type="button"><span class="icon">▣</span><span>Fixos</span></button>
             <button class="mobile-shortcut-btn" data-target="settings" type="button"><span class="icon">⚙</span><span>Ajustes</span></button>
           </section>
 
-          <section class="mobile-metrics-clean">
+          <section class="mobile-metrics-v7">
+            <article class="mobile-metric-card metric-main"><span>Saldo anterior</span><strong>${MM.helpers.formatCurrency(m.saldoAnterior)}</strong></article>
+            <article class="mobile-metric-card metric-main"><span>Saldo do caixa</span><strong>${MM.helpers.formatCurrency(m.saldo)}</strong></article>
+            <article class="mobile-metric-card"><span>Realizados</span><strong>${m.monthCashCount}</strong></article>
+            <article class="mobile-metric-card"><span>Pendentes</span><strong>${m.monthOpenCount}</strong></article>
             <article class="mobile-metric-card"><span>A vencer</span><strong>${m.dueSoon}</strong></article>
             <article class="mobile-metric-card"><span>Atrasadas</span><strong>${m.overdue}</strong></article>
-            <article class="mobile-metric-card"><span>Saldo anterior</span><strong>${MM.helpers.formatCurrency(m.saldoAnterior)}</strong></article>
-            <article class="mobile-metric-card"><span>Realizados</span><strong>${m.monthCashCount}</strong></article>
           </section>
 
-          <section class="panel section mobile-flow-panel">
-            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Fluxo do mês</h3><p>Entradas x saídas</p></div></div>
+          <section class="panel section mobile-panel-v7 mobile-flow-panel-v7">
+            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Resumo do mês</h3><p>Saldo, entradas e saídas reais</p></div></div>
             ${buildMonthDonut()}
           </section>
 
-          <section class="panel section mobile-user-balance-panel">
-            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Saldo por usuário</h3><p>Resumo individual</p></div></div>
-            <div class="item-list compact-balance-list mobile-balance-list">${balanceList}</div>
+          <section class="panel section mobile-panel-v7 mobile-trend-panel-v7">
+            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Fluxo realizado</h3><p>Últimas competências com caixa real</p></div></div>
+            <div class="flow-chart flow-chart-clean mobile-flow-chart-v7">${chartHtml}</div>
+          </section>
+
+          <section class="panel section mobile-panel-v7 mobile-distribution-panel-v7">
+            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Distribuição por usuário</h3><p>Entradas e saídas realizadas</p></div></div>
+            <div class="mobile-category-wrap-v7">${categoryChartHtml}</div>
+          </section>
+
+          <section class="panel section mobile-panel-v7 mobile-user-balance-panel-v7">
+            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Saldo por usuário</h3><p>Resumo individual do caixa</p></div></div>
+            <div class="item-list compact-balance-list mobile-balance-list-v7">${balanceList}</div>
+          </section>
+
+          <section class="panel section mobile-panel-v7 mobile-insight-panel-v7">
+            <div class="dashboard-v6-head mobile-clean-head"><div><h3>Leitura financeira</h3><p>Resumo rápido da competência</p></div></div>
+            ${insightHtml}
           </section>
         </section>`;
     } else {
@@ -204,18 +239,18 @@ MM.dashboardScreen = {
             </section>
             <section class="panel section dashboard-v6-panel insight-panel">
               <div class="dashboard-v6-head"><div><h3>Leitura financeira</h3><p>Inspeção rápida do mês</p></div></div>
-              <div class="insight-list">
-                <div class="insight-row"><span>Saldo do caixa</span><strong>${MM.helpers.formatCurrency(m.saldo)}</strong></div>
-                <div class="insight-row"><span>Já realizado</span><strong>${m.monthCashCount}</strong></div>
-                <div class="insight-row"><span>Ainda pendente</span><strong>${m.monthOpenCount}</strong></div>
-                <div class="insight-row"><span>Maior foco</span><strong>${m.byCategory && m.byCategory[0] ? m.byCategory[0].name : 'Sem categoria'}</strong></div>
-              </div>
+              ${insightHtml}
             </section>
           </section>
         </section>`;
     }
 
     MM.ui.setHTML('screen-container', shell);
+
+    function changeMonth(direction){
+      MM.state.currentMonth = direction < 0 ? MM.helpers.previousMonth(MM.state.currentMonth) : MM.helpers.nextMonth(MM.state.currentMonth);
+      MM.app.render();
+    }
 
     var entryBtn = document.getElementById('dashboard-new-entry');
     if(entryBtn) entryBtn.onclick = function(){ MM.router.goTo(MM.config.SCREENS.ENTRY); };
@@ -225,6 +260,30 @@ MM.dashboardScreen = {
     if(entryExtraBtn) entryExtraBtn.onclick = function(){ MM.router.goTo(MM.config.SCREENS.ENTRY_EXTRA); };
     var extraBtn = document.getElementById('dashboard-new-extra');
     if(extraBtn) extraBtn.onclick = function(){ MM.router.goTo(MM.config.SCREENS.EXTRA); };
+
+    var prevBtn = document.getElementById('mobile-month-prev');
+    var nextBtn = document.getElementById('mobile-month-next');
+    if(prevBtn) prevBtn.onclick = function(){ changeMonth(-1); };
+    if(nextBtn) nextBtn.onclick = function(){ changeMonth(1); };
+
+    var switcher = document.getElementById('mobile-month-switcher');
+    if(switcher){
+      var touchStartX = 0;
+      var touchStartY = 0;
+      switcher.addEventListener('touchstart', function(e){
+        var t = e.changedTouches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+      }, { passive:true });
+      switcher.addEventListener('touchend', function(e){
+        var t = e.changedTouches[0];
+        var dx = t.clientX - touchStartX;
+        var dy = t.clientY - touchStartY;
+        if(Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)){
+          changeMonth(dx < 0 ? 1 : -1);
+        }
+      }, { passive:true });
+    }
 
     document.querySelectorAll('.mobile-shortcut-btn').forEach(function(btn){
       btn.onclick = function(e){
@@ -238,7 +297,7 @@ MM.dashboardScreen = {
 
     document.querySelectorAll('.balance-user-link').forEach(function(btn){
       btn.onclick = function(e){
-        MM.state.movementFilters = { type:'todos', belongsTo:e.currentTarget.dataset.userId, status:'todos', text:'' };
+        MM.state.movementFilters = { type:'todos', belongsTo:e.currentTarget.dataset.userId, status:'todos', text:'', scope:'active' };
         MM.router.goTo(MM.config.SCREENS.MOVEMENTS);
       };
     });
