@@ -79,7 +79,18 @@ MM.dashboardScreen = {
 
     function buildAlerts(){
       if(!m.alerts || !m.alerts.length) return '';
-      return `<section class="budget-alerts">${m.alerts.map(function(text){ return `<div class="budget-alert-item">${text}</div>`; }).join('')}</section>`;
+      var title = m.alerts.length === 1 ? '1 atenção no orçamento' : m.alerts.length + ' atenções no orçamento';
+      return `<section class="budget-alerts-collapsed">
+        <details class="budget-alert-bubble">
+          <summary class="budget-alert-summary">
+            <span class="budget-alert-summary-left"><i>⚠️</i><strong>${title}</strong></span>
+            <span class="budget-alert-summary-right">Toque para ver</span>
+          </summary>
+          <div class="budget-alert-panel">
+            ${m.alerts.map(function(text, idx){ return `<div class="budget-alert-item"><span class="budget-alert-index">${idx + 1}</span><span>${text}</span></div>`; }).join('')}
+          </div>
+        </details>
+      </section>`;
     }
 
     var shell = isMobile ? `

@@ -80,6 +80,17 @@ MM.ui = {
       </nav>
       <div class="sidebar-footer">Caixa real: pagou ou recebeu, o saldo muda na hora.</div>
     `);
+    var navButtons = sidebar ? sidebar.querySelectorAll('[data-go]') : [];
+    navButtons.forEach(function(btn){
+      btn.onclick = function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var go = btn.getAttribute('data-go');
+        if(!go) return;
+        MM.router.goTo(go);
+        if(window.innerWidth <= 980){ MM.ui.closeSidebar(); }
+      };
+    });
   },
   renderTopbar: function(){
     var hasHousehold = !!MM.state.household;
