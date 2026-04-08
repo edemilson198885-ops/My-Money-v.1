@@ -100,7 +100,7 @@ MM.dashboardScreen = {
             <h2>Orçamento de ${userName}</h2>
             <p>Competência ${monthLabel}</p>
           </div>
-          <small>${m.topExpense ? 'Maior peso: ' + m.topExpense.name : 'Sem gasto principal'}</small>
+          <small>Contas a pagar: ${MM.helpers.formatCurrency(m.contasAPagar || 0)}</small>
         </div>
         ${buildAlerts()}
         ${buildTable(m.byIncomeSource, m.entradas, 'income', 'Dinheiro Entrando')}
@@ -116,6 +116,7 @@ MM.dashboardScreen = {
             <p>${userName} • competência ${monthLabel}</p>
           </div>
           <div class="budget-topline-values">
+            <span class="warning-chip">Contas a pagar ${MM.helpers.formatCurrency(m.contasAPagar || 0)}</span>
             <span class="income-chip">Entradas ${MM.helpers.formatCurrency(m.entradas)}</span>
             <span class="expense-chip">Saídas ${MM.helpers.formatCurrency(m.saidas)}</span>
             <span class="balance-chip">Saldo ${MM.helpers.formatCurrency(m.saldo)}</span>

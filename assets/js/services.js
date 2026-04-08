@@ -162,6 +162,11 @@ MM.services = {
     var saidas = realizedEntries.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
     var overdue = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'atrasado'; }).length;
     var dueSoon = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length;
+    var contasAPagar = competenceEntries.filter(function(m){
+      return m.type === 'saida' && !m.settledDate && Number(m.amount || 0) > 0;
+    }).reduce(function(sum, m){
+      return sum + Number(m.amount || 0);
+    }, 0);
 
     var saldoAnterior = MM.state.movements.reduce(function(sum, m){
       MM.services.normalizeMovementCategory(m);
@@ -192,6 +197,7 @@ MM.services = {
       byIncomeSource: byIncomeSource,
       overdue: overdue,
       dueSoon: dueSoon,
+      contasAPagar: contasAPagar,
       monthCashCount: realizedEntries.length,
       monthOpenCount: competenceEntries.filter(function(m){ return !MM.services.getMovementCashDate(m); }).length,
       alerts: alerts,
