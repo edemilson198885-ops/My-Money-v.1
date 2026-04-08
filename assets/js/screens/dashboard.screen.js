@@ -6,13 +6,22 @@ MM.dashboardScreen = {
     var userName = m.activeUser ? m.activeUser.name : 'Visão geral';
     var monthLabel = MM.helpers.formatMonthLabel(MM.state.currentMonth);
 
-    function buildRows(items, emptyText){
+    function buildRows(items, emptyText, kind){
       if(!items || !items.length){
         return `<div class="budget-empty">${emptyText}</div>`;
       }
       return items.map(function(item){
-        return `<div class="budget-row">
-          <div class="budget-row-left"><span class="budget-dot" style="background:${item.color || '#64748b'}"></span><span class="budget-name">${item.name}</span></div>
+        var clickable = kind === 'expense' ? ' is-clickable' : '';
+        var clickAttr = kind === 'expense' ? ` data-category="${item.name}"` : '';
+        var limitInfo = kind === 'expense' && item.limit ? `<div class="budget-subline ${item.exceeded ? 'danger' : ''}">Meta ${MM.helpers.formatCurrency(item.limit)}${item.limitPercent ? ` • ${item.limitPercent}%` : ''}</div>` : '';
+        return `<div class="budget-row${clickable}"${clickAttr}>
+          <div class="budget-row-left">
+            <span class="budget-dot" style="background:${item.color || '#64748b'}"></span>
+            <div>
+              <span class="budget-name">${item.icon ? item.icon + ' ' : ''}${item.name}</span>
+              ${limitInfo}
+            </div>
+          </div>
           <div class="budget-row-right"><strong>${MM.helpers.formatCurrency(item.total)}</strong>${typeof item.percent === 'number' && item.percent > 0 ? `<span>${item.percent}%</span>` : ''}</div>
         </div>`;
       }).join('');
@@ -20,10 +29,11 @@ MM.dashboardScreen = {
 
     function buildTable(items, total, titleClass, title){
       var footerLabel = titleClass === 'balance' ? 'Rendimentos menos despesas' : (titleClass === 'income' ? 'Rendimentos totais' : 'Despesas totais');
+      var kind = titleClass === 'expense' ? 'expense' : '';
       return `<section class="budget-box ${titleClass}">
         <div class="budget-box-title">${title}</div>
         <div class="budget-box-body">
-          ${buildRows(items, 'Sem dados nesta competência.')}
+          ${buildRows(items, 'Sem dados nesta competência.', kind)}
           <div class="budget-row budget-total-row"><div class="budget-row-left"><span class="budget-name">${footerLabel}</span></div><div class="budget-row-right"><strong>${MM.helpers.formatCurrency(total)}</strong></div></div>
         </div>
       </section>`;
@@ -55,7 +65,7 @@ MM.dashboardScreen = {
         return `<div class="budget-donut-label" style="left:calc(50% + ${x.toFixed(1)}px);top:calc(50% + ${y.toFixed(1)}px);">${pct}%</div>`;
       }).join('');
       var legend = items.map(function(item){
-        return `<div class="budget-legend-row"><span class="budget-legend-left"><i style="background:${item.color}"></i>${item.name}</span></div>`;
+        return `<button class="budget-legend-row is-clickable" data-category="${item.name}" type="button"><span class="budget-legend-left"><i style="background:${item.color}"></i>${item.icon ? item.icon + ' ' : ''}${item.name}</span><strong>${MM.helpers.formatCurrency(item.total)}</strong></button>`;
       }).join('');
       return `<div class="budget-chart-wrap">
         <div class="budget-chart-title">Dinheiro Saindo</div>
@@ -67,25 +77,31 @@ MM.dashboardScreen = {
       </div>`;
     }
 
+    function buildAlerts(){
+      if(!m.alerts || !m.alerts.length) return '';
+      return `<section class="budget-alerts">${m.alerts.map(function(text){ return `<div class="budget-alert-item">${text}</div>`; }).join('')}</section>`;
+    }
+
     var shell = isMobile ? `
-      <section class="budget-dashboard-shell mobile">
+      <section class="budget-dashboard-shell mobile premium-mode">
         <div class="budget-topline mobile">
           <div>
-            <h2>Orçamento</h2>
-            <p>${userName}</p>
+            <h2>Orçamento de ${userName}</h2>
+            <p>Competência ${monthLabel}</p>
           </div>
-          <small>${monthLabel}</small>
+          <small>${m.topExpense ? 'Maior peso: ' + m.topExpense.name : 'Sem gasto principal'}</small>
         </div>
+        ${buildAlerts()}
         ${buildTable(m.byIncomeSource, m.entradas, 'income', 'Dinheiro Entrando')}
         ${buildTable(m.byCategory, m.saidas, 'expense', 'Dinheiro Saindo')}
-        ${buildTable([{name:'Saldo do período',total:m.saldo,percent:0,color:'#3b82f6'}], m.saldo, 'balance', 'Dinheiro Restante')}
+        ${buildTable([{name:'Saldo do período',total:m.saldo,percent:0,color:'#1fa3ff',icon:'💰'}], m.saldo, 'balance', 'Dinheiro Restante')}
         <section class="budget-box chart-only"><div class="budget-box-body">${buildExpenseDonut(m.byCategory)}</div></section>
       </section>
     ` : `
-      <section class="budget-dashboard-shell">
+      <section class="budget-dashboard-shell premium-mode">
         <div class="budget-topline">
           <div>
-            <h2>Orçamento</h2>
+            <h2>Orçamento de ${userName}</h2>
             <p>${userName} • competência ${monthLabel}</p>
           </div>
           <div class="budget-topline-values">
@@ -94,11 +110,12 @@ MM.dashboardScreen = {
             <span class="balance-chip">Saldo ${MM.helpers.formatCurrency(m.saldo)}</span>
           </div>
         </div>
+        ${buildAlerts()}
         <div class="budget-main-grid">
           <div class="budget-left-column">
             ${buildTable(m.byIncomeSource, m.entradas, 'income', 'Dinheiro Entrando')}
             ${buildTable(m.byCategory, m.saidas, 'expense', 'Dinheiro Saindo')}
-            ${buildTable([{name:'Saldo do período',total:m.saldo,percent:0,color:'#3b82f6'}], m.saldo, 'balance', 'Dinheiro Restante')}
+            ${buildTable([{name:'Saldo do período',total:m.saldo,percent:0,color:'#1fa3ff',icon:'💰'}], m.saldo, 'balance', 'Dinheiro Restante')}
           </div>
           <div class="budget-right-column">
             ${buildExpenseDonut(m.byCategory)}
@@ -108,5 +125,10 @@ MM.dashboardScreen = {
     `;
 
     MM.ui.setHTML('screen-container', shell);
+    document.querySelectorAll('[data-category]').forEach(function(el){
+      el.onclick = function(){
+        MM.services.openMovementsByCategory(el.getAttribute('data-category'));
+      };
+    });
   }
 };
