@@ -1,8 +1,12 @@
 window.MM = window.MM || {};
 
 MM.auth = {
+  normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
+  },
+
   async signInWithPassword(email, password) {
-    email = String(email || '').trim().toLowerCase();
+    email = this.normalizeEmail(email);
     password = String(password || '');
 
     if (!email) throw new Error('Informe seu e-mail.');
@@ -13,6 +17,34 @@ MM.auth = {
       password: password
     });
 
+    if (error) throw error;
+    return data;
+  },
+
+  async signUpWithPassword(email, password) {
+    email = this.normalizeEmail(email);
+    password = String(password || '');
+
+    if (!email) throw new Error('Informe seu e-mail.');
+    if (!password) throw new Error('Informe sua senha.');
+    if (password.length < 6) throw new Error('A senha deve ter pelo menos 6 caracteres.');
+
+    const payload = { email: email, password: password };
+    const { data, error } = await MM.supabase.auth.signUp(payload);
+    if (error) throw error;
+    return data;
+  },
+
+  async resetPassword(email) {
+    email = this.normalizeEmail(email);
+    if (!email) throw new Error('Informe seu e-mail para recuperar a senha.');
+
+    const options = {};
+    if (window.location && window.location.protocol !== 'file:') {
+      options.redirectTo = window.location.origin + window.location.pathname;
+    }
+
+    const { data, error } = await MM.supabase.auth.resetPasswordForEmail(email, options);
     if (error) throw error;
     return data;
   },

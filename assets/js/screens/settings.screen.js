@@ -146,6 +146,11 @@ MM.settingsScreen = {
 
     document.getElementById('reset-local-btn').onclick = async function(){
       if(!confirm('Tem certeza que deseja sair da conta neste dispositivo?')) return;
+      try {
+        await MM.auth.signOut();
+      } catch (err) {
+        console.error('Erro ao sair da conta:', err);
+      }
       await MM.storage.resetLocalData();
       MM.stateApi.initialize();
       MM.setupScreen.resetTemp();

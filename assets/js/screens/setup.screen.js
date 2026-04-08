@@ -2,6 +2,7 @@ window.MM = window.MM || {};
 
 MM.setupScreen = (function(){
   var tempUsers = [];
+  var mode = 'login'; // login | register
 
   function renderUsers() {
     var list = document.getElementById('setup-users-list');
@@ -40,6 +41,11 @@ MM.setupScreen = (function(){
     renderUsers();
   }
 
+  function switchMode(nextMode) {
+    mode = nextMode === 'register' ? 'register' : 'login';
+    render();
+  }
+
   async function handleLogin() {
     try {
       var email = document.getElementById('setup-email').value.trim();
@@ -51,21 +57,34 @@ MM.setupScreen = (function(){
       setTimeout(async function() {
         await MM.app.hydrate();
         MM.app.render();
-      }, 300);
+      }, 250);
     } catch (err) {
       MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao entrar.', 'error');
     }
   }
 
-  async function handleSubmit() {
+  async function handleResetPassword() {
     try {
-      var householdName = document.getElementById('setup-household-name').value;
-      MM.services.validateHouseholdConfig({ householdName: householdName, users: tempUsers });
+      var email = document.getElementById('setup-email').value.trim();
+      await MM.auth.resetPassword(email);
+      MM.ui.showFeedback('setup-feedback', 'Enviamos o e-mail de redefinição de senha.', 'info');
+    } catch (err) {
+      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao enviar recuperação de senha.', 'error');
+    }
+  }
 
+  async function handleRegister() {
+    try {
+      var email = document.getElementById('setup-email').value.trim();
+      var password = document.getElementById('setup-password').value;
+      var householdName = document.getElementById('setup-household-name').value;
+
+      MM.services.validateHouseholdConfig({ householdName: householdName, users: tempUsers });
+      await MM.auth.signUpWithPassword(email, password);
+      await MM.auth.signInWithPassword(email, password);
       await MM.storage.bootstrapInitialData(householdName, tempUsers);
 
       var data = await MM.storage.loadAppData({ silent: true });
-
       if (data.config && data.config.household) {
         MM.state.household = data.config.household;
         MM.state.users = data.config.users || [];
@@ -74,80 +93,107 @@ MM.setupScreen = (function(){
         MM.state.currentScreen = MM.config.SCREENS.DASHBOARD;
       }
 
+      MM.ui.showFeedback('setup-feedback', 'Conta criada com sucesso.', 'info');
       MM.app.render();
-      MM.ui.showFeedback('setup-feedback', 'Configuração inicial concluída com sucesso.', 'info');
     } catch (err) {
-      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao criar residência.', 'error');
+      MM.ui.showFeedback('setup-feedback', err.message || 'Erro ao criar conta.', 'error');
     }
   }
 
-  async function render() {
-    var session = await MM.auth.getSession();
-    var isLogged = !!session;
-
+  function renderLogin() {
     MM.ui.setHTML('screen-container', `
       <section style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 0">
-        <div class="panel section" style="width:min(760px,100%);margin:0 auto">
-          <h2 style="margin-top:0">Primeiros passos</h2>
-
-          ${!isLogged ? `
-            <div class="field">
-              <label>Seu e-mail</label>
-              <input id="setup-email" type="email" placeholder="seuemail@exemplo.com" />
-            </div>
-
-            <div class="field">
-              <label>Sua senha</label>
-              <input id="setup-password" type="password" placeholder="Digite sua senha" />
-            </div>
-
+        <div class="panel section" style="width:min(560px,100%);margin:0 auto">
+          <h2 style="margin-top:0">Acessar sistema</h2>
+          <div class="field">
+            <label>Seu e-mail</label>
+            <input id="setup-email" type="email" placeholder="seuemail@exemplo.com" />
+          </div>
+          <div class="field">
+            <label>Sua senha</label>
+            <input id="setup-password" type="password" placeholder="Digite sua senha" />
+          </div>
+          <div class="actions-inline">
             <button class="btn primary" id="login-btn" type="button">Entrar</button>
-            <div style="height:16px"></div>
-          ` : `
-            <div class="feedback" style="display:block;background:#eef8ff;color:#145ea8;border:1px solid #c8e4ff;">
-              Você já está autenticado. Agora crie sua residência.
-            </div>
-          `}
-
-          <div class="field">
-            <label>Nome da residência</label>
-            <input id="setup-household-name" placeholder="Ex.: Casa da família" ${!isLogged ? 'disabled' : ''} />
+            <button class="btn secondary" id="goto-register-btn" type="button">Criar acesso</button>
+            <button class="btn secondary" id="reset-password-btn" type="button">Esqueci minha senha</button>
           </div>
-
-          <div class="field">
-            <div class="row">
-              <label>Usuários</label>
-              <button class="btn secondary" id="add-setup-user-btn" type="button" ${!isLogged ? 'disabled' : ''}>+ Adicionar usuário</button>
-            </div>
-            <div id="setup-users-list"></div>
-          </div>
-
-          <button class="btn primary" id="save-setup-btn" type="button" ${!isLogged ? 'disabled' : ''}>Iniciar sistema</button>
-          <div class="feedback" id="setup-feedback">${!isLogged ? 'Entre com e-mail e senha para começar.' : 'Pronto para configurar sua residência.'}</div>
+          <div class="feedback" id="setup-feedback">Entre com seu e-mail e senha.</div>
         </div>
       </section>
     `);
 
+    document.getElementById('login-btn').onclick = handleLogin;
+    document.getElementById('goto-register-btn').onclick = function(){ switchMode('register'); };
+    document.getElementById('reset-password-btn').onclick = handleResetPassword;
+  }
+
+  function renderRegister() {
     if (tempUsers.length === 0) addUser('');
 
+    MM.ui.setHTML('screen-container', `
+      <section style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 0">
+        <div class="panel section" style="width:min(760px,100%);margin:0 auto">
+          <h2 style="margin-top:0">Criar acesso</h2>
+          <div class="field">
+            <label>Seu e-mail</label>
+            <input id="setup-email" type="email" placeholder="seuemail@exemplo.com" />
+          </div>
+          <div class="field">
+            <label>Sua senha</label>
+            <input id="setup-password" type="password" placeholder="Crie uma senha" />
+          </div>
+          <div class="field">
+            <label>Nome da residência</label>
+            <input id="setup-household-name" placeholder="Ex.: Casa da família" />
+          </div>
+          <div class="field">
+            <div class="row">
+              <label>Usuários</label>
+              <button class="btn secondary" id="add-setup-user-btn" type="button">+ Adicionar usuário</button>
+            </div>
+            <div id="setup-users-list"></div>
+          </div>
+          <div class="actions-inline">
+            <button class="btn primary" id="save-setup-btn" type="button">Criar conta e iniciar sistema</button>
+            <button class="btn secondary" id="goto-login-btn" type="button">Voltar para entrar</button>
+          </div>
+          <div class="feedback" id="setup-feedback">Cadastre e-mail, senha, residência e usuários para começar.</div>
+        </div>
+      </section>
+    `);
+
     renderUsers();
+    document.getElementById('add-setup-user-btn').onclick = function(){ addUser(''); };
+    document.getElementById('save-setup-btn').onclick = handleRegister;
+    document.getElementById('goto-login-btn').onclick = function(){ switchMode('login'); };
+  }
 
-    var loginBtn = document.getElementById('login-btn');
-    if (loginBtn) loginBtn.onclick = handleLogin;
+  async function render() {
+    var session = await MM.auth.getSession();
+    var hasHousehold = !!MM.state.household;
 
-    var addBtn = document.getElementById('add-setup-user-btn');
-    if (addBtn) addBtn.onclick = function(){ addUser(''); };
+    if (session && hasHousehold) {
+      MM.app.render();
+      return;
+    }
 
-    var saveBtn = document.getElementById('save-setup-btn');
-    if (saveBtn) saveBtn.onclick = handleSubmit;
+    if (session && !hasHousehold) {
+      mode = 'register';
+    }
+
+    if (mode === 'register') renderRegister();
+    else renderLogin();
   }
 
   function resetTemp() {
     tempUsers = [];
+    mode = 'login';
   }
 
   return {
     render: render,
-    resetTemp: resetTemp
+    resetTemp: resetTemp,
+    switchMode: switchMode
   };
 })();
