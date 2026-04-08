@@ -15,6 +15,7 @@ MM.extraScreen = {
         <div class="field"><label>Nome da compra</label><input id="extra-description" placeholder="Ex.: Lanche, farmácia, Uber" value="${editing ? editing.description : ''}" /></div>
         <div class="field"><label>Usuário do lançamento</label><div class="active-user-field">👤 ${selectedUser ? selectedUser.name : 'Selecione usuário no topo'}</div></div>
         <div class="field"><label>Data da compra</label><input id="extra-date" type="date" value="${defaultDate}" /></div>
+        <div class="field"><label>Categoria</label><select id="extra-category">${MM.helpers.renderCategoryOptions('saida', editing ? editing.category : 'auto')}</select></div>
         <div class="field"><label>Valor</label><input id="extra-amount" placeholder="Ex.: 25,90" value="${editing ? String(editing.amount).replace('.', ',') : ''}" /></div>
         <div class="field"><label>Observação</label><textarea id="extra-note" rows="3" placeholder="Opcional">${editing ? (editing.note || '') : ''}</textarea></div>
 
@@ -40,7 +41,7 @@ MM.extraScreen = {
           householdId: MM.state.household.id,
           type: 'saida',
           description: document.getElementById('extra-description').value,
-          category: editing ? (editing.category || '') : '',
+          category: (document.getElementById('extra-category').value === 'auto' ? MM.helpers.autoCategory(document.getElementById('extra-description').value, 'saida') : document.getElementById('extra-category').value),
           recurrence: 'extra',
           belongsTo: (selectedUser ? selectedUser.id : ''),
           settledBy: (selectedUser ? selectedUser.id : ''),

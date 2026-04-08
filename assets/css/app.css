@@ -1856,3 +1856,100 @@ body{
   .budget-alert-summary-right{font-size:.84rem}
   .budget-alert-item{padding:10px 12px;border-radius:14px;font-size:.92rem}
 }
+
+
+/* --- Correção final de contraste e formulários, aba por aba --- */
+.panel.section h2,
+.panel.section h3,
+.panel.section label,
+.panel.section .muted,
+.panel.section .field label,
+.panel.section .movement-scope-label,
+.panel.section .movement-card-title,
+.panel.section .movement-card-meta,
+.panel.section .movement-detail-label,
+.panel.section .movement-detail strong,
+.panel.section th,
+.panel.section td,
+.panel.section strong,
+.panel.section .toolbar,
+.panel.section .toolbar *{
+  color:#1f1637 !important;
+  opacity:1 !important;
+}
+
+.panel.section .muted{ color:#6b5f86 !important; }
+.panel.section .table-wrap,
+.panel.section table,
+.panel.section thead,
+.panel.section tbody,
+.panel.section tr{ opacity:1 !important; }
+.panel.section th{ color:#776c92 !important; font-weight:800 !important; }
+.panel.section td{ color:#241a3d !important; }
+.panel.section td .muted{ color:#776c92 !important; }
+
+.panel.section input,
+.panel.section select,
+.panel.section textarea{
+  background:#ffffff !important;
+  color:#1f1637 !important;
+  border:1px solid #d9ccff !important;
+  box-shadow:none !important;
+  opacity:1 !important;
+}
+.panel.section input::placeholder,
+.panel.section textarea::placeholder{
+  color:#8b80a8 !important;
+  opacity:1 !important;
+}
+.panel.section select option{ color:#1f1637 !important; background:#ffffff !important; }
+.panel.section .active-user-field{
+  background:#f3edff !important;
+  color:#35225c !important;
+  border:1px solid #d9ccff !important;
+  opacity:1 !important;
+}
+
+.quick-pay-done,
+.badge.pago,
+.badge.recebido,
+.badge.ativo{
+  background:#dcfce7 !important;
+  color:#166534 !important;
+  border-color:#86efac !important;
+  font-weight:800 !important;
+}
+.quick-pay-done{
+  background:#22c55e !important;
+  color:#ffffff !important;
+  border-color:#16a34a !important;
+  box-shadow:0 10px 24px rgba(34,197,94,.22) !important;
+}
+.quick-pay-done svg{ stroke:#ffffff !important; }
+
+.movement-card,
+.table-wrap,
+.panel.section .movement-detail,
+.panel.section .item,
+.panel.section .quick-summary-item{
+  opacity:1 !important;
+}
+
+/* Fixos automáticos: garantir leitura completa */
+#screen-container .table-wrap table th,
+#screen-container .table-wrap table td,
+#screen-container .table-wrap table strong,
+#screen-container .table-wrap .badge{
+  opacity:1 !important;
+}
+
+/* Movimentações: filtros e detalhes sempre legíveis */
+#movements-list .movement-card-title,
+#movements-list .movement-card-meta,
+#movements-list .movement-card-value,
+#movements-list .movement-detail-label,
+#movements-list .movement-detail strong{
+  color:#1f1637 !important;
+  opacity:1 !important;
+}
+#movements-list .movement-card-body{ background:#fcfaff !important; }

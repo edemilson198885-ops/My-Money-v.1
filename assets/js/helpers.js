@@ -28,6 +28,25 @@ MM.helpers = {
       .toLowerCase()
       .trim();
   },
+
+  incomeCategoryOptions: function(){
+    return ['auto','Salário','Vale','Aluguel','Reembolso','Extras','Outras entradas'];
+  },
+  expenseCategoryOptions: function(){
+    return ['auto','Moradia','Alimentação','Transporte','Utilidades','Lazer','Educação','Saúde','Dívidas','Família','Reserva','Outros'];
+  },
+  categoryLabel: function(value, type){
+    if(value === 'auto') return type === 'entrada' ? 'Automática (pela descrição da entrada)' : 'Automática (pela descrição da saída)';
+    return value;
+  },
+  renderCategoryOptions: function(type, selected){
+    var list = type === 'entrada' ? this.incomeCategoryOptions() : this.expenseCategoryOptions();
+    var current = selected && String(selected).trim() ? String(selected).trim() : 'auto';
+    return list.map(function(item){
+      var label = MM.helpers.categoryLabel(item, type);
+      return '<option value="' + item + '" ' + (item === current ? 'selected' : '') + '>' + label + '</option>';
+    }).join('');
+  },
   inferIncomeSource: function(description){
     var text = this.normalizeText(description);
     if(!text) return 'Outras entradas';
