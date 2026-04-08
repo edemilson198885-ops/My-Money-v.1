@@ -22,64 +22,43 @@ MM.helpers = {
   ,activeUser: function(){ return MM.state.users.find(function(u){ return u.id === MM.state.activeUserId && !u.inactive; }) || null; },
   activeUserName: function(){ var u = this.activeUser(); return u ? u.name : 'Não selecionado'; }
 
-};
-
-
-MM.helpers.normalizeText = function(value){
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim();
-};
-
-MM.helpers.inferCategory = function(movement){
-  var description = MM.helpers.normalizeText(movement && movement.description);
-  var type = String(movement && movement.type || 'saida').trim();
-  if(!description){
-    return type === 'entrada' ? 'Receitas' : 'Outros';
+  ,slugifyText: function(value){ return String(value || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim(); },
+  autoDetectExitCategory: function(description, currentCategory){
+    var existing = String(currentCategory || '').trim();
+    if(existing) return existing;
+    var text = this.slugifyText(description);
+    if(!text) return 'Outros';
+    if(text.includes('mercado') || text.includes('marmitex') || text.includes('almoco') || text.includes('janta') || text.includes('pizza') || text.includes('salgado')) return 'Alimentação';
+    if(text.includes('agua') || text.includes('luz') || text.includes('internet') || text.includes('netflix') || text.includes('container') || text.includes('credito celular') || text.includes('credito vivo') || text.includes('vivo bradesco')) return 'Utilidades';
+    if(text.includes('gasolina') || text.includes('carro') || text.includes('sem parar') || text.includes('uber') || text.includes('combust')) return 'Transporte';
+    if(text.includes('faculdade') || text.includes('senai') || text.includes('curso')) return 'Educação';
+    if(text.includes('remedio') || text.includes('fisio') || text.includes('fisioterapia') || text.includes('farmacia')) return 'Saúde';
+    if(text.includes('nubank') || text.includes('emprestimo') || text.includes('pagamento') && text.includes('camila') || text.includes('vale') && text.includes('camila') || text.includes('cartao')) return 'Dívidas';
+    if(text.includes('iptu') || text.includes('ipva') || text.includes('imposto') || text.includes('licenciamento')) return 'Moradia';
+    if(text.includes('fralda') || text.includes('murilo') || text.includes('elizangela') || text.includes('amor') || text.includes('fernanda')) return 'Família';
+    if(text.includes('reserva')) return 'Reserva';
+    return 'Outros';
+  },
+  autoDetectIncomeSource: function(description, currentCategory){
+    var existing = String(currentCategory || '').trim();
+    if(existing) return existing;
+    var text = this.slugifyText(description);
+    if(!text) return 'Outras entradas';
+    if(text.includes('vale')) return 'Vale';
+    if(text.includes('salario') || text.includes('pagamento') || text.includes('pagamento marco')) return 'Salário';
+    if(text.includes('aluguel')) return 'Aluguel';
+    if(text.includes('reembolso') || text.includes('despesa')) return 'Reembolso';
+    if(text.includes('bonus') || text.includes('extra') || text.includes('cobre') || text.includes('bst') || text.includes('telesites') || text.includes('amor')) return 'Extras';
+    return 'Outras entradas';
+  },
+  getMovementCategoryLabel: function(m){
+    if(!m) return '-';
+    if(m.type === 'entrada') return this.autoDetectIncomeSource(m.description, m.category);
+    return this.autoDetectExitCategory(m.description, m.category);
+  },
+  getBudgetColor: function(index){
+    var palette = ['#1da1f2','#69dc43','#ffc928','#ff4d3d','#e544a7','#57c7ff','#7f63ff','#18b7a0','#64748b'];
+    return palette[index % palette.length];
   }
 
-  if(type === 'entrada'){
-    if(description.includes('vale')) return 'Vale';
-    if(description.includes('aluguel')) return 'Renda extra';
-    if(description.includes('pagamento')) return 'Salário';
-    if(description.includes('bst') || description.includes('cobre') || description.includes('despesa')) return 'Extras';
-    return 'Receitas';
-  }
-
-  if(description.includes('mercado') || description.includes('marmitex') || description.includes('almoco') || description.includes('almoço') || description.includes('pizza') || description.includes('janta') || description.includes('salgado') || description.includes('container')) return 'Alimentação';
-  if(description.includes('luz') || description == 'agua' || description.includes('conta de agua') || description.includes('internet') || description.includes('netflix') || description.includes('vivo bradesco') || description.includes('credito celular') || description.includes('credito vivo') || description.includes('dr monitora')) return 'Utilidades';
-  if(description.includes('gasolina') || description.includes('carro') || description.includes('sem parar')) return 'Transporte';
-  if(description.includes('senai') || description.includes('faculdade') || description.includes('curso')) return 'Educação';
-  if(description.includes('remedio') || description.includes('remédio') || description.includes('fisio') || description.includes('fisioterapia') || description.includes('farmacia')) return 'Saúde';
-  if(description.includes('iptu') || description.includes('ipva') || description.includes('imposto')) return 'Impostos';
-  if(description.includes('nubank') || description.includes('emprestimo') || description.includes('empréstimo') || description.includes('camila pagamento') || description.includes('camila vale') || description.includes('amor')) return 'Dívidas';
-  if(description.includes('fralda') || description.includes('mesada') || description.includes('murilo') || description.includes('elizangela') || description.includes('fernanda')) return 'Família';
-  if(description.includes('reserva emergencia') || description.includes('reserva emergência')) return 'Reserva';
-  if(description.includes('lazer') || description.includes('shop') || description.includes('shoop') || description.includes('ferias') || description.includes('férias')) return 'Lazer';
-  return 'Outros';
-};
-
-
-MM.helpers.getCategoryOptions = function(type){
-  var normalizedType = String(type || 'saida').trim();
-  if(normalizedType === 'entrada'){
-    return ['Automática','Salário','Vale','Renda extra','Extras','Receitas'];
-  }
-  return ['Automática','Alimentação','Utilidades','Transporte','Educação','Saúde','Impostos','Dívidas','Família','Reserva','Lazer','Outros'];
-};
-
-MM.helpers.renderCategoryOptions = function(type, selected){
-  var current = String(selected || '').trim();
-  return MM.helpers.getCategoryOptions(type).map(function(name){
-    var value = name === 'Automática' ? '' : name;
-    var isSelected = current === value || (!current && value === '');
-    return '<option value="' + value + '" ' + (isSelected ? 'selected' : '') + '>' + name + '</option>';
-  }).join('');
-};
-
-MM.helpers.resolveCategory = function(movement){
-  var current = String(movement && movement.category || '').trim();
-  return current || MM.helpers.inferCategory(movement);
 };

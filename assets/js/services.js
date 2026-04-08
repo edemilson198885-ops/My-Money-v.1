@@ -98,33 +98,24 @@ MM.services = {
   buildCategoryBreakdown: function(movements){
     var totals = {};
     movements.filter(function(m){ return m.type === 'saida'; }).forEach(function(m){
-      var key = MM.helpers.resolveCategory(m);
+      var key = MM.helpers.getMovementCategoryLabel(m);
       totals[key] = (totals[key] || 0) + Number(m.amount || 0);
     });
-    return Object.keys(totals).map(function(name){
-      return { name: name, total: totals[name] };
-    }).sort(function(a,b){ return b.total - a.total; });
+    return Object.keys(totals).map(function(name){ return { name:name, total:totals[name] }; }).sort(function(a,b){ return b.total - a.total; });
   },
-  normalizeMovementCategories: function(){
-    MM.state.movements.forEach(function(m){
-      var resolved = MM.helpers.resolveCategory(m);
-      if(resolved && m.category !== resolved) m.category = resolved;
+  buildIncomeBreakdown: function(movements){
+    var totals = {};
+    movements.filter(function(m){ return m.type === 'entrada'; }).forEach(function(m){
+      var key = MM.helpers.getMovementCategoryLabel(m);
+      totals[key] = (totals[key] || 0) + Number(m.amount || 0);
     });
-    MM.state.templates.forEach(function(t){
-      var resolved = MM.helpers.resolveCategory(t);
-      if(resolved && t.category !== resolved) t.category = resolved;
-    });
-  },
-  getDashboardMetricsByResolvedCategory: function(movements){
-    return this.buildCategoryBreakdown((movements || []).map(function(item){
-      return Object.assign({}, item, { category: MM.helpers.resolveCategory(item) });
-    }));
+    return Object.keys(totals).map(function(name){ return { name:name, total:totals[name] }; }).sort(function(a,b){ return b.total - a.total; });
   },
   getDashboardMetrics: function(){
-    this.normalizeMovementCategories();
     var month = MM.state.currentMonth;
-    var competenceEntries = this.getMonthMovements();
-    var realizedEntries = this.getCashMovementsForMonth(month);
+    var activeUser = this.getActiveUser();
+    var competenceEntries = this.getMonthMovements().filter(function(m){ return !activeUser || m.belongsTo === activeUser.id; });
+    var realizedEntries = this.getCashMovementsForMonth(month).filter(function(m){ return !activeUser || m.belongsTo === activeUser.id; });
 
     var entradas = realizedEntries.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
     var saidas = realizedEntries.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
@@ -132,28 +123,44 @@ MM.services = {
     var dueSoon = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length;
 
     var saldoAnterior = MM.state.movements.reduce(function(sum, m){
+      if(activeUser && m.belongsTo !== activeUser.id) return sum;
       var cashDate = MM.services.getMovementCashDate(m);
       if(!cashDate || cashDate.slice(0,7) >= month) return sum;
       return sum + (m.type === 'entrada' ? Number(m.amount||0) : -Number(m.amount||0));
     }, 0);
 
-    var byUserIncome = MM.state.users.map(function(u){
-      return { user:u, total: realizedEntries.filter(function(m){ return m.type === 'entrada' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
+    var byCategory = this.buildCategoryBreakdown(realizedEntries);
+    var categoryTotal = byCategory.reduce(function(sum,item){ return sum + Number(item.total || 0); }, 0) || 1;
+    byCategory = byCategory.map(function(item, idx){
+      return {
+        name: item.name,
+        total: item.total,
+        percent: Math.round((Number(item.total || 0) / categoryTotal) * 100),
+        color: MM.helpers.getBudgetColor(idx)
+      };
     });
-    var byUserExpense = MM.state.users.map(function(u){
-      return { user:u, total: realizedEntries.filter(function(m){ return m.type === 'saida' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0) };
+
+    var byIncomeSource = this.buildIncomeBreakdown(realizedEntries);
+    var incomeTotal = byIncomeSource.reduce(function(sum,item){ return sum + Number(item.total || 0); }, 0) || 1;
+    byIncomeSource = byIncomeSource.map(function(item, idx){
+      return {
+        name: item.name,
+        total: item.total,
+        percent: Math.round((Number(item.total || 0) / incomeTotal) * 100),
+        color: ['#22c55e','#4ade80','#86efac','#bbf7d0'][idx % 4]
+      };
     });
-    var byUserBalance = MM.state.users.map(function(u){
-      var income = byUserIncome.find(function(item){ return item.user.id === u.id; });
-      var expense = byUserExpense.find(function(item){ return item.user.id === u.id; });
-      var incomeTotal = income ? Number(income.total || 0) : 0;
-      var expenseTotal = expense ? Number(expense.total || 0) : 0;
+
+    var usersForBalances = activeUser ? [activeUser] : MM.state.users.filter(function(u){ return !u.inactive; });
+    var byUserBalance = usersForBalances.map(function(u){
+      var incomeTotal = realizedEntries.filter(function(m){ return m.type === 'entrada' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
+      var expenseTotal = realizedEntries.filter(function(m){ return m.type === 'saida' && m.belongsTo === u.id; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
       return { user:u, total: incomeTotal - expenseTotal, income: incomeTotal, expense: expenseTotal };
     });
 
-    var cashMonths = Array.from(new Set(MM.state.movements.map(function(m){ return MM.services.getMovementCashMonth(m); }).filter(Boolean))).sort();
+    var cashMonths = Array.from(new Set(MM.state.movements.filter(function(m){ return !activeUser || m.belongsTo === activeUser.id; }).map(function(m){ return MM.services.getMovementCashMonth(m); }).filter(Boolean))).sort();
     var monthlyFlow = cashMonths.slice(-6).map(function(mon){
-      var ms = MM.services.getCashMovementsForMonth(mon);
+      var ms = MM.services.getCashMovementsForMonth(mon).filter(function(m){ return !activeUser || m.belongsTo === activeUser.id; });
       var totalEntradas = ms.filter(function(item){ return item.type === 'entrada'; }).reduce(function(sum,item){ return sum + Number(item.amount || 0); }, 0);
       var totalSaidas = ms.filter(function(item){ return item.type === 'saida'; }).reduce(function(sum,item){ return sum + Number(item.amount || 0); }, 0);
       return {
@@ -166,15 +173,16 @@ MM.services = {
     });
 
     return {
+      activeUser: activeUser,
       entradas: entradas,
       saidas: saidas,
       saldoAnterior: saldoAnterior,
-      saldo: saldoAnterior + (entradas - saidas),
+      saldo: entradas - saidas,
+      saldoAcumulado: saldoAnterior + (entradas - saidas),
       count: competenceEntries.length,
-      byUserIncome: byUserIncome,
-      byUserExpense: byUserExpense,
       byUserBalance: byUserBalance,
-      byCategory: this.getDashboardMetricsByResolvedCategory(realizedEntries),
+      byCategory: byCategory,
+      byIncomeSource: byIncomeSource,
       overdue: overdue,
       dueSoon: dueSoon,
       monthlyFlow: monthlyFlow,
@@ -195,7 +203,7 @@ MM.services = {
     if(movement.recurrence !== 'fixa') return;
     var dueDay = Number((movement.dueDate || '').slice(8,10));
     var idx = MM.state.templates.findIndex(function(t){ return t.type === movement.type && t.description.toLowerCase() === movement.description.toLowerCase() && t.belongsTo === movement.belongsTo && t.category.toLowerCase() === movement.category.toLowerCase(); });
-    var template = MM.models.createTemplate({ id: idx >= 0 ? MM.state.templates[idx].id : undefined, householdId: movement.householdId, type: movement.type, description: movement.description, category: MM.helpers.resolveCategory(movement), belongsTo: movement.belongsTo, amount: movement.amount, dueDay: dueDay, note: movement.note, active: true });
+    var template = MM.models.createTemplate({ id: idx >= 0 ? MM.state.templates[idx].id : undefined, householdId: movement.householdId, type: movement.type, description: movement.description, category: movement.category, belongsTo: movement.belongsTo, amount: movement.amount, dueDay: dueDay, note: movement.note, active: true });
     if(idx >= 0){ MM.state.templates[idx] = template; movement.templateId = template.id; } else { MM.state.templates.push(template); movement.templateId = template.id; }
   },
   createNextRecurringMovementOnSettle: function(movement){
@@ -223,7 +231,7 @@ MM.services = {
       householdId: movement.householdId,
       type: movement.type,
       description: movement.description,
-      category: MM.helpers.resolveCategory(movement),
+      category: movement.category,
       recurrence: movement.recurrence,
       belongsTo: movement.belongsTo,
       settledBy: '',
@@ -248,7 +256,7 @@ MM.services = {
       var parts = month.split('-'); var year = Number(parts[0]), mm = Number(parts[1]);
       var day = Math.min(t.dueDay || 1, MM.helpers.daysInMonth(year, mm));
       var dueDate = year + '-' + String(mm).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-      created.push(MM.models.createMovement({ householdId: MM.state.household.id, type: t.type, description: t.description, category: MM.helpers.resolveCategory(t), recurrence: 'fixa', belongsTo: t.belongsTo, settledBy: '', competence: month, amount: t.amount, dueDate: dueDate, settledDate: '', note: t.note, origin: 'automatica', templateId: t.id }));
+      created.push(MM.models.createMovement({ householdId: MM.state.household.id, type: t.type, description: t.description, category: t.category, recurrence: 'fixa', belongsTo: t.belongsTo, settledBy: '', competence: month, amount: t.amount, dueDate: dueDate, settledDate: '', note: t.note, origin: 'automatica', templateId: t.id }));
     });
     if(created.length){ MM.state.movements = MM.state.movements.concat(created); MM.sync.syncNow().catch(function(err){ console.error('sync error:', err); MM.ui.showToast(err.message || 'Erro ao sincronizar.', 'error'); }); }
     return created;
