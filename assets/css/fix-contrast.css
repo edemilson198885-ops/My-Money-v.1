@@ -1,0 +1,78 @@
+/* Correção de contraste para Fixos automáticos e Movimentações */
+#screen-container h1,
+#screen-container h2,
+#screen-container h3,
+#screen-container p,
+#screen-container label,
+#screen-container strong,
+#screen-container span,
+#screen-container th,
+#screen-container td,
+#screen-container .muted,
+#screen-container .feedback,
+#screen-container .value,
+#screen-container .movement-card-title,
+#screen-container .movement-card-meta,
+#screen-container .movement-card-value,
+#screen-container .movement-detail-label,
+#screen-container .movement-detail strong,
+#screen-container .movement-scope-label,
+#screen-container .panel,
+#screen-container .panel * {
+  opacity: 1 !important;
+}
+
+/* Movimentações */
+#screen-container .movement-card,
+#screen-container .movement-card * {
+  color: #1f2937 !important;
+}
+#screen-container .movement-card-meta,
+#screen-container .movement-detail-label,
+#screen-container .movement-scope-label,
+#screen-container .muted,
+#screen-container .feedback {
+  color: #6b7280 !important;
+}
+#screen-container .movement-card-body,
+#screen-container .movement-detail,
+#screen-container .movement-detail-wide {
+  background: #ffffff !important;
+}
+
+/* Fixos automáticos / tabelas */
+#screen-container table,
+#screen-container thead,
+#screen-container tbody,
+#screen-container tr,
+#screen-container th,
+#screen-container td {
+  color: #1f2937 !important;
+}
+#screen-container th {
+  color: #6f628e !important;
+}
+
+/* Campos de filtros */
+#screen-container input,
+#screen-container select,
+#screen-container textarea {
+  color: #1f2937 !important;
+  opacity: 1 !important;
+}
+#screen-container input::placeholder,
+#screen-container textarea::placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Botões preservam seu visual */
+#screen-container .btn,
+#screen-container button,
+#screen-container .chip,
+#screen-container .badge,
+#screen-container .status-pill,
+#screen-container .movement-status,
+#screen-container .pill {
+  opacity: 1 !important;
+}
