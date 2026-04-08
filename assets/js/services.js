@@ -98,14 +98,30 @@ MM.services = {
   buildCategoryBreakdown: function(movements){
     var totals = {};
     movements.filter(function(m){ return m.type === 'saida'; }).forEach(function(m){
-      var key = String(m.category || '').trim() || 'Sem categoria';
+      var key = MM.helpers.resolveCategory(m);
       totals[key] = (totals[key] || 0) + Number(m.amount || 0);
     });
     return Object.keys(totals).map(function(name){
       return { name: name, total: totals[name] };
     }).sort(function(a,b){ return b.total - a.total; });
   },
+  normalizeMovementCategories: function(){
+    MM.state.movements.forEach(function(m){
+      var resolved = MM.helpers.resolveCategory(m);
+      if(resolved && m.category !== resolved) m.category = resolved;
+    });
+    MM.state.templates.forEach(function(t){
+      var resolved = MM.helpers.resolveCategory(t);
+      if(resolved && t.category !== resolved) t.category = resolved;
+    });
+  },
+  getDashboardMetricsByResolvedCategory: function(movements){
+    return this.buildCategoryBreakdown((movements || []).map(function(item){
+      return Object.assign({}, item, { category: MM.helpers.resolveCategory(item) });
+    }));
+  },
   getDashboardMetrics: function(){
+    this.normalizeMovementCategories();
     var month = MM.state.currentMonth;
     var competenceEntries = this.getMonthMovements();
     var realizedEntries = this.getCashMovementsForMonth(month);
@@ -158,7 +174,7 @@ MM.services = {
       byUserIncome: byUserIncome,
       byUserExpense: byUserExpense,
       byUserBalance: byUserBalance,
-      byCategory: this.buildCategoryBreakdown(realizedEntries).slice(0,5),
+      byCategory: this.getDashboardMetricsByResolvedCategory(realizedEntries),
       overdue: overdue,
       dueSoon: dueSoon,
       monthlyFlow: monthlyFlow,
@@ -179,7 +195,7 @@ MM.services = {
     if(movement.recurrence !== 'fixa') return;
     var dueDay = Number((movement.dueDate || '').slice(8,10));
     var idx = MM.state.templates.findIndex(function(t){ return t.type === movement.type && t.description.toLowerCase() === movement.description.toLowerCase() && t.belongsTo === movement.belongsTo && t.category.toLowerCase() === movement.category.toLowerCase(); });
-    var template = MM.models.createTemplate({ id: idx >= 0 ? MM.state.templates[idx].id : undefined, householdId: movement.householdId, type: movement.type, description: movement.description, category: movement.category, belongsTo: movement.belongsTo, amount: movement.amount, dueDay: dueDay, note: movement.note, active: true });
+    var template = MM.models.createTemplate({ id: idx >= 0 ? MM.state.templates[idx].id : undefined, householdId: movement.householdId, type: movement.type, description: movement.description, category: MM.helpers.resolveCategory(movement), belongsTo: movement.belongsTo, amount: movement.amount, dueDay: dueDay, note: movement.note, active: true });
     if(idx >= 0){ MM.state.templates[idx] = template; movement.templateId = template.id; } else { MM.state.templates.push(template); movement.templateId = template.id; }
   },
   createNextRecurringMovementOnSettle: function(movement){
@@ -207,7 +223,7 @@ MM.services = {
       householdId: movement.householdId,
       type: movement.type,
       description: movement.description,
-      category: movement.category,
+      category: MM.helpers.resolveCategory(movement),
       recurrence: movement.recurrence,
       belongsTo: movement.belongsTo,
       settledBy: '',
@@ -232,7 +248,7 @@ MM.services = {
       var parts = month.split('-'); var year = Number(parts[0]), mm = Number(parts[1]);
       var day = Math.min(t.dueDay || 1, MM.helpers.daysInMonth(year, mm));
       var dueDate = year + '-' + String(mm).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-      created.push(MM.models.createMovement({ householdId: MM.state.household.id, type: t.type, description: t.description, category: t.category, recurrence: 'fixa', belongsTo: t.belongsTo, settledBy: '', competence: month, amount: t.amount, dueDate: dueDate, settledDate: '', note: t.note, origin: 'automatica', templateId: t.id }));
+      created.push(MM.models.createMovement({ householdId: MM.state.household.id, type: t.type, description: t.description, category: MM.helpers.resolveCategory(t), recurrence: 'fixa', belongsTo: t.belongsTo, settledBy: '', competence: month, amount: t.amount, dueDate: dueDate, settledDate: '', note: t.note, origin: 'automatica', templateId: t.id }));
     });
     if(created.length){ MM.state.movements = MM.state.movements.concat(created); MM.sync.syncNow().catch(function(err){ console.error('sync error:', err); MM.ui.showToast(err.message || 'Erro ao sincronizar.', 'error'); }); }
     return created;

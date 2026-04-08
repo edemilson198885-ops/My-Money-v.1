@@ -1,11 +1,7 @@
-My Money com Supabase
+Passos finais:
 
-1. Rode o patch SQL `supabase_patch_allow_extra.sql` no SQL Editor do Supabase.
-2. Substitua os arquivos do repositório por este pacote.
-3. Faça commit/push.
-4. Espere o GitHub Pages publicar.
-5. Abra o app e faça login por e-mail.
-
-URLs configuradas:
-- Site URL: https://edemilson198885-ops.github.io
-- Redirect URL: https://edemilson198885-ops.github.io/My-Money-v.1/
+1. No Supabase, rode o arquivo `supabase_patch_allow_extra.sql`.
+2. No Supabase, rode o arquivo `supabase_fix_profiles_policy.sql`.
+3. Publique estes arquivos no GitHub Pages.
+4. Entre no app com e-mail e senha já cadastrados no Supabase Auth.
+5. Se o app abrir já autenticado por uma sessão antiga, saia em Configurações ou limpe os dados do site no navegador.

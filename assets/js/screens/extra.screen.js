@@ -9,8 +9,9 @@ MM.extraScreen = {
         <div class="muted" style="margin-bottom:16px">Cadastro simples para gastos pontuais. Não replica e não usa vencimento.</div>
 
         <div class="field"><label>Nome da compra</label><input id="extra-description" placeholder="Ex.: Lanche, farmácia, Uber" /></div>
+        <div class="field"><label>Categoria</label><select id="extra-category">${MM.helpers.renderCategoryOptions('saida', '')}</select></div>
         <div class="field"><label>Usuário do lançamento</label><div class="active-user-field">👤 ${activeUser ? activeUser.name : 'Selecione usuário no topo'}</div></div>
-                <div class="field"><label>Data da compra</label><input id="extra-date" type="date" value="${new Date().toISOString().slice(0,10)}" /></div>
+        <div class="field"><label>Data da compra</label><input id="extra-date" type="date" value="${new Date().toISOString().slice(0,10)}" /></div>
         <div class="field"><label>Valor</label><input id="extra-amount" placeholder="Ex.: 25,90" /></div>
         <div class="field"><label>Observação</label><textarea id="extra-note" rows="3" placeholder="Opcional"></textarea></div>
 
@@ -18,7 +19,7 @@ MM.extraScreen = {
           <button class="btn secondary" id="extra-cancel-btn" type="button">Cancelar</button>
           <button class="btn primary" id="extra-save-btn" type="button">Salvar despesa extra</button>
         </div>
-        <div class="feedback" id="extra-feedback">A data da compra deve pertencer à competência atual exibida no topo. A despesa extra nasce como paga e não replica no mês seguinte.</div>
+        <div class="feedback" id="extra-feedback">Use "Automática" para o app definir a categoria sozinho pela descrição.</div>
       </section>
     `);
 
@@ -26,11 +27,13 @@ MM.extraScreen = {
     document.getElementById('extra-save-btn').onclick = async function(){
       try{
         if(!activeUser) throw new Error('Selecione o usuário ativo no topo antes de continuar.');
+        var description = document.getElementById('extra-description').value;
+        var selectedCategory = document.getElementById('extra-category').value;
         var movement = MM.models.createMovement({
           householdId: MM.state.household.id,
           type: 'saida',
-          description: document.getElementById('extra-description').value,
-          category: '',
+          description: description,
+          category: selectedCategory || MM.helpers.inferCategory({ type: 'saida', description: description }),
           recurrence: 'extra',
           belongsTo: (activeUser ? activeUser.id : ''),
           settledBy: (activeUser ? activeUser.id : ''),

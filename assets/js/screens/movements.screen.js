@@ -42,7 +42,7 @@ MM.movementsScreen = {
             <option value="vencer" ${preset.status==='vencer'?'selected':''}>A vencer</option>
             <option value="atrasado" ${preset.status==='atrasado'?'selected':''}>Atrasado</option>
           </select>
-          <input id="filter-text" placeholder="Buscar descrição" value="${preset.text || ''}" />
+          <input id="filter-text" placeholder="Buscar descrição ou categoria" value="${preset.text || ''}" />
           <button class="btn secondary" id="apply-filters-btn" type="button">Aplicar</button>
           <button class="btn secondary" id="clear-filters-btn" type="button">Limpar filtro</button>
         </div>
@@ -62,6 +62,7 @@ MM.movementsScreen = {
         <div class="movement-details-grid">
           <div class="movement-detail"><span class="movement-detail-label">Tipo</span><strong>${m.type === 'entrada' ? 'Entrada' : 'Saída'}</strong></div>
           <div class="movement-detail"><span class="movement-detail-label">Usuário</span><strong>${MM.helpers.userName(m.belongsTo)}</strong></div>
+          <div class="movement-detail"><span class="movement-detail-label">Categoria</span><strong>${MM.helpers.resolveCategory(m)}</strong></div>
           <div class="movement-detail"><span class="movement-detail-label">Recorrência</span><strong>${recurrenceMap[m.recurrence] || m.recurrence || '-'}</strong></div>
           <div class="movement-detail"><span class="movement-detail-label">Data</span><strong>${MM.helpers.formatDate(m.dueDate)}</strong></div>
           <div class="movement-detail movement-detail-wide"><span class="movement-detail-label">Observação</span><strong>${m.note ? m.note : 'Sem observação'}</strong></div>
