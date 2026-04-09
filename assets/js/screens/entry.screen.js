@@ -33,6 +33,13 @@ MM.entryScreen = {
         MM.services.validateMovement(movement);
         MM.services.createOrUpdateTemplateFromMovement(movement);
         if(editing){ MM.state.movements = MM.state.movements.map(function(item){ return item.id === movement.id ? movement : item; }); } else { MM.state.movements.push(movement); }
+
+        // Entradas fixas também precisam projetar a próxima competência,
+        // assim como as saídas fixas já fazem no fluxo atual.
+        if(movement.recurrence === 'fixa') {
+          MM.services.createNextRecurringMovementOnSettle(movement);
+        }
+
         MM.state.editingMovementId = null;
         await MM.sync.syncNow();
         MM.router.goTo(MM.config.SCREENS.DASHBOARD);

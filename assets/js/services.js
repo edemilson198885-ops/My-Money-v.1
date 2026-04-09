@@ -150,6 +150,7 @@ MM.services = {
   },
   getDashboardMetrics: function(){
     var month = MM.state.currentMonth;
+    this.generateFixedForMonth(month);
     var activeUser = this.getActiveUser();
     var competenceEntries = this.getMonthMovements();
     var realizedEntries = this.getCashMovementsForMonth(month);
@@ -158,7 +159,8 @@ MM.services = {
       realizedEntries = realizedEntries.filter(function(m){ return m.belongsTo === activeUser.id; });
     }
 
-    var entradas = realizedEntries.filter(function(m){ return m.type === 'entrada'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
+    var competenceIncomeEntries = competenceEntries.filter(function(m){ return m.type === 'entrada' && Number(m.amount||0) > 0; });
+    var entradas = competenceIncomeEntries.reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
     var saidas = realizedEntries.filter(function(m){ return m.type === 'saida'; }).reduce(function(sum,m){ return sum + Number(m.amount||0); }, 0);
     var overdue = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'atrasado'; }).length;
     var dueSoon = competenceEntries.filter(function(m){ return m.type === 'saida' && MM.services.calculateStatus(m) === 'vencer'; }).length;
@@ -177,7 +179,7 @@ MM.services = {
     }, 0);
 
     var byCategory = this.buildCategoryBreakdown(realizedEntries);
-    var byIncomeSource = this.buildIncomeBreakdown(realizedEntries);
+    var byIncomeSource = this.buildIncomeBreakdown(competenceIncomeEntries);
     var topExpense = byCategory[0] || null;
     var alerts = [];
     byCategory.forEach(function(item){

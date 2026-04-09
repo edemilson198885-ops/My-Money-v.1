@@ -132,6 +132,8 @@ MM.ui = {
     `);
     document.getElementById('global-month').onchange = function(e){
       MM.state.currentMonth = e.target.value || MM.helpers.currentMonth();
+      MM.services.generateFixedForMonth(MM.state.currentMonth);
+      MM.sync.syncNow().catch(function(){});
       MM.app.render();
     };
     document.getElementById('topbar-active-user-btn').onclick = function(){ MM.ui.openActiveUserSelector(); };
